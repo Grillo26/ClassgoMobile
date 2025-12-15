@@ -1880,7 +1880,7 @@ class _HomeScreenState extends State<HomeScreen>
                               style:
                                   TextStyle(color: Colors.white, fontSize: 16)),
                           onTap: () async {
-                            final url = 'https://www.classgoapp.com/about-us';
+                            final url = 'https://www.classgoapp.com/nosotros';
                             if (await canLaunchUrl(Uri.parse(url))) {
                               await launchUrl(Uri.parse(url));
                             }
@@ -1897,7 +1897,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   TextStyle(color: Colors.white, fontSize: 16)),
                           onTap: () async {
                             final url =
-                                'https://www.classgoapp.com/how-it-works';
+                                'https://www.classgoapp.com/como-trabajamos';
                             if (await canLaunchUrl(Uri.parse(url))) {
                               await launchUrl(Uri.parse(url));
                             }
@@ -1913,7 +1913,7 @@ class _HomeScreenState extends State<HomeScreen>
                               style:
                                   TextStyle(color: Colors.white, fontSize: 16)),
                           onTap: () async {
-                            final url = 'https://www.classgoapp.com/faq';
+                            final url = 'https://www.classgoapp.com/preguntas';
                             if (await canLaunchUrl(Uri.parse(url))) {
                               await launchUrl(Uri.parse(url));
                             }
