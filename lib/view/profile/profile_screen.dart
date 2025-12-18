@@ -133,17 +133,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+      // 🔒 SI ES GUEST, NO HACER NADA
+      if (!authProvider.isLoggedIn) return;
+
       if (authProvider.userData != null) {
         final newBalance = authProvider.userData?['user']?['balance'] ?? 0.00;
         authProvider.updateBalance(double.parse(newBalance.toString()));
         setState(() {});
       }
-      // Obtener imagen de perfil desde la API
+
       final int? userId = authProvider.userId;
       if (userId != null) {
         try {
-          final response = await http.get(Uri.parse(
-              'https://classgoapp.com/api/user/$userId/profile-image'));
+          final response = await http.get(
+            Uri.parse('https://classgoapp.com/api/user/$userId/profile-image'),
+          );
           if (response.statusCode == 200) {
             final data = json.decode(response.body);
             setState(() {
@@ -165,9 +169,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+// 🔒 MODO INVITADO (NO LOGUEADO)
+    if (!authProvider.isLoggedIn) {
+      return _GuestProfile();
+    }
+
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
-    final authProvider = Provider.of<AuthProvider>(context);
     final bookingProvider = Provider.of<BookingProvider>(context);
     final userData = authProvider.userData;
     final int? userId = authProvider.userId;
@@ -875,3 +885,73 @@ class _ProfileStat extends StatelessWidget {
     );
   }
 }
+
+class _GuestProfile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.primaryGreen,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 80,
+                color: Colors.white.withOpacity(0.85),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Inicia sesión para acceder a tu perfil',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Revisa tu historial, estadísticas, pagos y configuración personal.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => LoginScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.lightBlueColor,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 36,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Iniciar sesión',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
