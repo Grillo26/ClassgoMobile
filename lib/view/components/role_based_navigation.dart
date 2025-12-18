@@ -4,6 +4,7 @@ import 'package:flutter_projects/provider/auth_provider.dart';
 import 'package:flutter_projects/view/home/home_screen.dart';
 import 'package:flutter_projects/view/tutor/dashboard_tutor.dart';
 import 'package:flutter_projects/view/auth/login_screen.dart';
+import 'package:flutter_projects/view/layout/main_shell.dart';
 
 class RoleBasedNavigation extends StatelessWidget {
   @override
@@ -26,7 +27,7 @@ class RoleBasedNavigation extends StatelessWidget {
           return DashboardTutor();
         } else {
           // Para estudiantes y cualquier otro rol, usar HomeScreen
-          return HomeScreen();
+          return MainShell();
         }
       },
     );

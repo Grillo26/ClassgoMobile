@@ -3,6 +3,7 @@ import 'package:flutter_projects/api_structure/api_service.dart';
 import 'package:flutter_projects/base_components/custom_snack_bar.dart';
 import 'package:flutter_projects/provider/auth_provider.dart';
 import 'package:flutter_projects/styles/app_styles.dart';
+import 'package:flutter_projects/view/layout/main_shell.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_projects/view/auth/reset_password_screen.dart';
 import 'package:flutter_projects/view/home/home_screen.dart';
 import 'package:flutter_projects/view/tutor/dashboard_tutor.dart';
 import 'package:flutter_projects/helpers/back_button_handler.dart';
+import 'package:flutter_projects/view/components/role_based_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   final Map<String, dynamic>? registrationResponse;
@@ -107,17 +109,11 @@ class _LoginScreenState extends State<LoginScreen>
 
         // Redirigir según el rol
         final String? role = userData['user']?['role'];
-        if (role == 'tutor') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => DashboardTutor()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
-          );
-        }
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => RoleBasedNavigation()),
+          (route) => false,
+        );
 
         _emailController.clear();
         _passwordController.clear();
@@ -334,47 +330,47 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> signInWithGoogle(BuildContext context) async {
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      // El usuario canceló el inicio de sesión
-      return;
-    }
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-    final String? idToken = googleAuth.idToken;
-    if (idToken == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo obtener el token de Google.')),
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
       );
-      return;
-    }
-    // Envía el idToken a tu backend para autenticar/registrar al usuario
-    final response = await http.post(
-      Uri.parse('https://classgoapp.com/api/auth/google'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id_token': idToken}),
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final token = data['token'];
-      final user = data['user'];
-      if (token != null && user != null) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        await authProvider.setToken(token);
-        await authProvider.setUserData(user);
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => HomeScreen()),
-          (route) => false,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo iniciar sesión con Google.')),
-        );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return;
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final String? idToken = googleAuth.idToken;
+      print('🟢 GOOGLE ID TOKEN => $idToken');
+      if (idToken == null) {
+        throw Exception('No se pudo obtener el token de Google');
       }
-    } else {
+
+      final response = await http.post(
+        Uri.parse('https://classgoapp.com/api/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id_token': idToken}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error backend Google login');
+      }
+
+      final data = jsonDecode(response.body);
+
+      // 🔥 CLAVE: data debe ser IGUAL al login normal
+      await authProvider.setToken(data['token']);
+      await authProvider.setUserData(data);
+      await authProvider.setAuthToken(data['token']);
+
+      // ❌ NO navegues
+      // RoleBasedNavigation se encarga solo
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al iniciar sesión con Google.')),
+        SnackBar(content: Text('Error al iniciar sesión con Google')),
       );
     }
   }
@@ -449,7 +445,8 @@ class _LoginScreenState extends State<LoginScreen>
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => HomeScreen()),
+                                    builder: (_) =>
+                                       const MainShell()),
                                 (Route<dynamic> route) => false,
                               );
                             },

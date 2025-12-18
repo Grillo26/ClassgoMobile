@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen>
           Uri.parse(url),
           mode: LaunchMode.externalApplication,
         );
-        
+
         // Mostrar confirmación al usuario
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen>
         final webUrl = url;
         if (await canLaunchUrl(Uri.parse(webUrl))) {
           await launchUrl(Uri.parse(webUrl));
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -137,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen>
       try {
         if (await canLaunchUrl(Uri.parse(url))) {
           await launchUrl(Uri.parse(url));
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -150,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen>
         }
       } catch (e2) {
         print('Error final al abrir $platform: $e2');
-        
+
         // Mostrar error al usuario
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -538,8 +538,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     // Usar un key único para evitar rebuilds innecesarios
-    final screenKey =
-        ValueKey('home_screen_${_todaysBookings.length}_${_isLoadingBookings}');
+    final screenKey = ValueKey(
+        'optimized_home_screen_${_todaysBookings.length}_${_isLoadingBookings}');
 
     return Scaffold(
       body: Stack(
@@ -562,61 +562,11 @@ class _HomeScreenState extends State<HomeScreen>
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Left menu icon
-                        Builder(
-                          builder: (context) => InkWell(
-                            onTap: () {
-                              setState(() {
-                                _isLeftDrawerOpen =
-                                    !_isLeftDrawerOpen; // Toggle left drawer state
-                                _isCustomDrawerOpen =
-                                    false; // Close right drawer if open
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: EdgeInsets.all(6),
-                              child: Icon(Icons.menu,
-                                  color: Colors.white,
-                                  size:
-                                      26), // Adjusted size to match person icon
-                            ),
-                          ),
-                        ),
-                        Image.asset(
-                          'assets/images/logo_classgo.png',
-                          height: 38, // Ajusta el tamaño según tu diseño
-                        ),
-                        // Right person icon
-                        Builder(
-                          builder: (context) => InkWell(
-                            onTap: () {
-                              setState(() {
-                                _isCustomDrawerOpen =
-                                    !_isCustomDrawerOpen; // Toggle right drawer state
-                                _isLeftDrawerOpen =
-                                    false; // Close left drawer if open
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: EdgeInsets.all(6),
-                              child: Icon(Icons.person_outline,
-                                  color: Colors.white,
-                                  size: 26), // Adjusted size to match menu icon
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/logo_classgo.png',
+                        height: 38,
+                      ),
                     ),
                   ),
                   // Mensaje principal, menú de opciones e imagen
@@ -992,7 +942,8 @@ class _HomeScreenState extends State<HomeScreen>
                                                                 List<dynamic>
                                                                     newSubjects =
                                                                     [];
-                                                                if (response.containsKey(
+                                                                if (response
+                                                                    .containsKey(
                                                                         'data')) {
                                                                   final responseData =
                                                                       response[
@@ -1159,36 +1110,50 @@ class _HomeScreenState extends State<HomeScreen>
                                                                               true,
                                                                         );
                                                                         try {
-                                                                          print('DEBUG: Llamando a getTutorForSubject con subjectId: $subjectId');
-                                                                          final response = await getTutorForSubject(token, subjectId);
-                                                                          print('DEBUG: Respuesta de getTutorForSubject: $response');
-                                                                          
+                                                                          print(
+                                                                              'DEBUG: Llamando a getTutorForSubject con subjectId: $subjectId');
+                                                                          final response = await getTutorForSubject(
+                                                                              token,
+                                                                              subjectId);
+                                                                          print(
+                                                                              'DEBUG: Respuesta de getTutorForSubject: $response');
+
                                                                           // Procesar la respuesta
-                                                                          if (response['success'] == true) {
-                                                                            final tutor = response['data']['tutor'];
-                                                                            final subject = response['data']['subject'];
-                                                                            final tutorName = tutor['full_name'] ?? 'Sin nombre';
-                                                                            final tutorImage = tutor['image'] ?? '';
-                                                                            final tutorId = tutor['id'];
-                                                                            final subjectName = subject['name'] ?? '';
-                                                                            
+                                                                          if (response['success'] ==
+                                                                              true) {
+                                                                            final tutor =
+                                                                                response['data']['tutor'];
+                                                                            final subject =
+                                                                                response['data']['subject'];
+                                                                            final tutorName =
+                                                                                tutor['full_name'] ?? 'Sin nombre';
+                                                                            final tutorImage =
+                                                                                tutor['image'] ?? '';
+                                                                            final tutorId =
+                                                                                tutor['id'];
+                                                                            final subjectName =
+                                                                                subject['name'] ?? '';
+
                                                                             print('DEBUG: ✅ Tutor encontrado: $tutorName (ID: $tutorId)');
                                                                             print('DEBUG: ✅ Materia: $subjectName');
                                                                             print('DEBUG: 🔄 Cerrando loader y navegando...');
-                                                                            
+
                                                                             // Crear lista de materias del tutor (solo la materia encontrada)
-                                                                            final validSubjects = <String>[subjectName];
-                                                                            
+                                                                            final validSubjects =
+                                                                                <String>[
+                                                                              subjectName
+                                                                            ];
+
                                                                             try {
                                                                               // 1. Cerrar el loader usando Navigator.of(context, rootNavigator: true)
                                                                               if (mounted) {
                                                                                 Navigator.of(context, rootNavigator: true).pop();
                                                                                 print('DEBUG: ✅ Loader cerrado exitosamente');
-                                                                                
+
                                                                                 // 2. Navegar usando GlobalKey después de un pequeño delay
                                                                                 Future.delayed(Duration(milliseconds: 300), () {
                                                                                   print('DEBUG: 🚀 Navegando a InstantTutoringScreen...');
-                                                                                  
+
                                                                                   try {
                                                                                     // Navegar usando GlobalKey
                                                                                     navigatorKey.currentState?.push(
@@ -1206,7 +1171,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                                                     print('DEBUG: ✅ Navegación exitosa a InstantTutoringScreen');
                                                                                   } catch (e) {
                                                                                     print('DEBUG: ❌ Error en navegación: $e');
-                                                                                    
+
                                                                                     // Fallback: Intentar navegación alternativa
                                                                                     try {
                                                                                       print('DEBUG: 🔄 Intentando navegación alternativa...');
@@ -1247,7 +1212,6 @@ class _HomeScreenState extends State<HomeScreen>
                                                                                   ),
                                                                                 );
                                                                               }
-                                                                              
                                                                             } catch (e) {
                                                                               print('DEBUG: ❌ Error en navegación: $e');
                                                                               // Fallback final: mostrar mensaje de éxito
@@ -1272,10 +1236,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                                             Navigator.of(context, rootNavigator: true).pop(); // Cierra el loader
                                                                             print('DEBUG: Error al buscar tutor: $e');
                                                                             ScaffoldMessenger.of(context).showSnackBar(
-                                                                            SnackBar(
+                                                                              SnackBar(
                                                                                 content: Text('Error al buscar tutor: $e'),
-                                                                            ),
-                                                                          );
+                                                                              ),
+                                                                            );
                                                                           }
                                                                         }
                                                                       },
@@ -1411,9 +1375,9 @@ class _HomeScreenState extends State<HomeScreen>
                                       rating,
                                       subjects,
                                       completedCourses) {
-                                                  Navigator.of(context).push(
-                                                    SlideUpRoute(
-                                                      page: TutorProfileScreen(
+                                    Navigator.of(context).push(
+                                      SlideUpRoute(
+                                        page: TutorProfileScreen(
                                           tutorId: tutorId,
                                           tutorName: tutorName,
                                           tutorImage: tutorImage,
@@ -1422,36 +1386,36 @@ class _HomeScreenState extends State<HomeScreen>
                                           rating: rating,
                                           subjects: subjects,
                                           completedCourses: completedCourses,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   onStartTutoring: (tutor, profile, subjects,
                                       validSubjects) {
                                     final firstSubject = subjects.isNotEmpty
-                                                            ? subjects.first
-                                                            : null;
+                                        ? subjects.first
+                                        : null;
                                     final subjectId = firstSubject?['id'] ?? 1;
 
-                                                    showModalBottomSheet(
-                                                      context: context,
-                                                      isScrollControlled: true,
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
                                       backgroundColor: Colors.transparent,
-                                                      builder: (context) =>
-                                                          InstantTutoringScreen(
+                                      builder: (context) =>
+                                          InstantTutoringScreen(
                                         tutorName: profile['full_name'] ??
-                                                            'Sin nombre',
+                                            'Sin nombre',
                                         tutorImage:
                                             highResTutorImages[tutor['id']] ??
-                                                            getFullUrl(
+                                                getFullUrl(
                                                     profile['image'] ?? '',
-                                                                baseImageUrl),
+                                                    baseImageUrl),
                                         subjects: validSubjects.cast<String>(),
-                                                        tutorId: tutor['id'],
+                                        tutorId: tutor['id'],
                                         subjectId: subjectId,
-                                                      ),
-                                                    );
-                                                  },
+                                      ),
+                                    );
+                                  },
                                   // ✅ OPTIMIZACIÓN: Pasar todas las variables necesarias
                                   highResTutorImages: highResTutorImages,
                                   baseImageUrl: baseImageUrl,
@@ -1467,147 +1431,6 @@ class _HomeScreenState extends State<HomeScreen>
                                       _buildAvatarWithShimmer,
                                 );
                               },
-                            ),
-                          ),
-                          SizedBox(height: 18),
-                          // Guía paso a paso
-                          Text(
-                            'Una guía paso a paso',
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 14),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Desbloquea tu potencial con pasos sencillos',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18),
-                          ),
-                          SizedBox(height: 12),
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height *
-                                0.36, // Altura variable
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: [
-                                _StepCard(
-                                  step: 'Paso 1',
-                                  title: 'Inscríbete',
-                                  description:
-                                      'Crea tu cuenta rápidamente para comenzar a utilizar nuestra plataforma.',
-                                  buttonText: 'Empezar',
-                                  imageUrl:
-                                      'https://www.classgoapp.com/images/home/img1.webp',
-                                  onButtonPressed: () => _handleRegister(),
-                                ),
-                                SizedBox(width: 18),
-                                _StepCard(
-                                  step: 'Paso 2',
-                                  title: 'Encuentra un Tutor',
-                                  description:
-                                      'Busca y selecciona entre tutores calificados según tus necesidades.',
-                                  buttonText: 'Buscar Ahora',
-                                  imageUrl:
-                                      'https://www.classgoapp.com/images/home/img22.webp',
-                                  onButtonPressed: () => _handleTutorSearch(),
-                                ),
-                                SizedBox(width: 18),
-                                _StepCard(
-                                  step: 'Paso 3',
-                                  title: 'Programar una Sesión',
-                                  description:
-                                      'Reserva fácilmente un horario conveniente para tu sesión.',
-                                  buttonText: 'Empecemos',
-                                  imageUrl:
-                                      'https://www.classgoapp.com/images/home/img3.webp',
-                                  onButtonPressed: () => _handleTutorSearch(),
-                                ),
-                                SizedBox(width: 18),
-                                _StartJourneyCard(
-                                  onButtonPressed: () => _handleTutorSearch(),
-                                ),
-                                SizedBox(
-                                    width:
-                                        8), // Added SizedBox for spacing at the end
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 18),
-                          // ¿Por qué elegirnos?
-                          Text(
-                            '¿Por qué Elegirnos?',
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 14),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Por el acceso rápido, 24/7, a tutorías personalizadas que potencian tu aprendizaje',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Accede a sesiones cortas y prácticas, diseñadas por tutores expertos para ser tus pequeños salvavidas en el aprendizaje',
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 14),
-                          ),
-                          SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('• Acceso 24/7',
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 14)),
-                                Text('• Tutores Expertos',
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 14)),
-                                Text('• Tarifas asequibles',
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 12), // Added SizedBox for spacing
-                          Center(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF9900),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 32, vertical: 12),
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RegistrationScreen(),
-                                  ),
-                                );
-                              },
-                              child: Text('Comienza Ahora',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                          SizedBox(height: 18),
-                          // Imagen de grupo (usa la imagen del paso 3)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              'https://www.classgoapp.com/images/home/img3.webp',
-                              height: 220,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
                             ),
                           ),
                           SizedBox(height: 18),
@@ -1680,313 +1503,6 @@ class _HomeScreenState extends State<HomeScreen>
                     color: Colors.black54), // Semi-transparent overlay
               ),
             ),
-          // Custom Drawer Implementation (Right) - Existing
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            top: MediaQuery.of(context).padding.top,
-            right: _isCustomDrawerOpen
-                ? 0
-                : -(MediaQuery.of(context).size.width * 0.7),
-            width: MediaQuery.of(context).size.width * 0.7,
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.8,
-                minHeight: MediaQuery.of(context).size.height * 0.4,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.darkBlue,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.lightBlueColor, width: 1.0),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                    child: ListView(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.zero,
-                      children: <Widget>[
-                        // Drawer Header (User Info)
-                        _CustomDrawerHeader(
-                          authProvider:
-                              Provider.of<AuthProvider>(context, listen: false),
-                          highResTutorImages: highResTutorImages,
-                        ),
-                        Divider(
-                            color: Colors.white.withOpacity(0.1),
-                            thickness: 1), // Add a divider after header
-                        // Menu Items
-                        _buildMenuItem(
-                          icon: Icons.settings,
-                          title: 'Configuración del perfil',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SearchTutorsScreen(
-                                    initialMode: 'agendar', initialPage: 3),
-                              ),
-                            );
-                            setState(() {
-                              _isCustomDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.calendar_today,
-                          title: 'Mis tutorías',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SearchTutorsScreen(
-                                    initialMode: 'agendar', initialPage: 1),
-                              ),
-                            );
-                            setState(() {
-                              _isCustomDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.history,
-                          title: 'Historial de tutorías',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SearchTutorsScreen(
-                                    initialMode: 'agendar', initialPage: 2),
-                              ),
-                            );
-                            setState(() {
-                              _isCustomDrawerOpen = false;
-                            });
-                          },
-                        ),
-
-                        Divider(
-                            color: Colors.white.withOpacity(0.1),
-                            thickness: 1), // Add a divider
-                        _buildMenuItem(
-                          icon: Icons.logout,
-                          title: 'Salir de la cuenta',
-                          onTap: () async {
-                            await Provider.of<AuthProvider>(context,
-                                    listen: false)
-                                .clearToken();
-
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (context) => LoginScreen()),
-                              (Route<dynamic> route) => false,
-                            );
-                            setState(() {
-                              _isCustomDrawerOpen = false;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Custom Drawer Implementation (Left) - Existing
-          if (_isLeftDrawerOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isLeftDrawerOpen = false;
-                  });
-                },
-                child: Container(
-                    color: Colors.black
-                        .withOpacity(0.5)), // Overlay semi-transparente
-              ),
-            ),
-
-          // Custom Drawer Implementation (Left) - Código movido aquí
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300), // Animation duration
-            curve: Curves.easeInOut,
-            top: MediaQuery.of(context).padding.top +
-                62.0, // Position below status bar and header
-            left: _isLeftDrawerOpen
-                ? 0
-                : -(MediaQuery.of(context).size.width *
-                    0.7), // Slide in/out from the left
-            width: MediaQuery.of(context).size.width *
-                0.7, // Set width (adjust as needed)
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height *
-                    0.8, // Máximo 80% de la altura de la pantalla
-              ),
-              decoration: BoxDecoration(
-                color:
-                    const Color(0xFF00B4D8), // Teal background color from Figma
-                borderRadius: BorderRadius.only(
-                  topRight:
-                      Radius.circular(16), // Apply border radius to top right
-                  bottomRight: Radius.circular(
-                      16), // Apply border radius to bottom right
-                ),
-                boxShadow: [
-                  // Optional: Add shadow for depth
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                    offset: Offset(5, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize:
-                    MainAxisSize.min, // Importante: usar MainAxisSize.min
-                children: [
-                  Expanded(
-                    child: ListView(
-                      shrinkWrap: true, // Importante: agregar shrinkWrap
-                      padding: EdgeInsets.zero,
-                      children: [
-                        // Menu Items
-                        ListTile(
-                          title: Text('Buscar Tutores',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    SearchTutorsScreen(initialMode: 'agendar'),
-                              ),
-                            );
-                            setState(() {
-                              _isLeftDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        Divider(
-                            color: Colors.white54, thickness: 0.5), // Divider
-                        ListTile(
-                          title: Text('Sobre Nosotros',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          onTap: () async {
-                            final url = 'https://www.classgoapp.com/nosotros';
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(Uri.parse(url));
-                            }
-                            setState(() {
-                              _isLeftDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        Divider(
-                            color: Colors.white54, thickness: 0.5), // Divider
-                        ListTile(
-                          title: Text('Como Trabajamos',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          onTap: () async {
-                            final url =
-                                'https://www.classgoapp.com/como-trabajamos';
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(Uri.parse(url));
-                            }
-                            setState(() {
-                              _isLeftDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        Divider(
-                            color: Colors.white54, thickness: 0.5), // Divider
-                        ListTile(
-                          title: Text('Preguntas',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          onTap: () async {
-                            final url = 'https://www.classgoapp.com/preguntas';
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(Uri.parse(url));
-                            }
-                            setState(() {
-                              _isLeftDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        Divider(
-                            color: Colors.white54, thickness: 0.5), // Divider
-                        ListTile(
-                          title: Text('Blogs',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          onTap: () async {
-                            final url = 'https://www.classgoapp.com/blogs';
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(Uri.parse(url));
-                            }
-                            setState(() {
-                              _isLeftDrawerOpen = false;
-                            });
-                          },
-                        ),
-                        Divider(
-                            color: Colors.white54, thickness: 0.5), // Divider
-                      ],
-                    ),
-                  ),
-                  // Social Media Icons Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20.0, horizontal: 16.0), // Adjust padding
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            _openSocialMediaLink(
-                              'https://www.tiktok.com/@classgoapp?_t=ZM-8yxTxzdclEu&_r=1',
-                              'TikTok',
-                            );
-                          },
-                          child: Icon(Icons.music_note,
-                              color: Colors.white, size: 30), // TikTok icon
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            _openSocialMediaLink(
-                              'https://www.facebook.com/share/1GeC6R8gM8/?mibextid=wwXIfr',
-                              'Facebook',
-                            );
-                          },
-                          child: Icon(Icons.facebook,
-                              color: Colors.white, size: 30), // Facebook icon
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            _openSocialMediaLink(
-                              'https://www.instagram.com/classgo_app?igsh=MXJxNzJ0aXk3NjJkYQ==',
-                              'Instagram',
-                            );
-                          },
-                          child: Icon(Icons.camera_alt,
-                              color: Colors.white, size: 30), // Instagram icon
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -2928,7 +2444,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                                           profile['full_name'] ??
                                                                               'Sin nombre';
                                                                       final tutorImage = highResTutorImages[randomTutor['id']] !=
-                                                                                  null
+                                                                              null
                                                                           ? highResTutorImages[randomTutor[
                                                                               'id']]
                                                                           : profile['image'] ??
@@ -3611,39 +3127,6 @@ class _HomeScreenState extends State<HomeScreen>
   //   }
   // }
 
-  // ✅ MÉTODOS PARA MANEJAR LOS BOTONES DE LAS TARJETAS
-  void _handleRegister() {
-    // Navegar a la vista de registro
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RegistrationScreen(),
-      ),
-    );
-  }
-
-  void _handleTutorSearch() {
-    // Verificar si el usuario está logueado
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.isLoggedIn) {
-      // Usuario logueado, navegar a search_tutors
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SearchTutorsScreen(),
-        ),
-      );
-    } else {
-      // Usuario no logueado, mostrar mensaje
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Debes iniciar sesión para acceder a esta función'),
-          backgroundColor: Colors.orange,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  }
 
   void _showLoginRequiredDialog(BuildContext context) {
     showDialog(

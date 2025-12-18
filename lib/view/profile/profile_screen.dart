@@ -89,8 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<String?> _fetchProfileImage(int userId) async {
     try {
       final response = await http.get(
-        Uri.parse('https://classgoapp.com/api/user/$userId/profile-image')
-      );
+          Uri.parse('https://classgoapp.com/api/user/$userId/profile-image'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return data['profile_image'] as String?;
@@ -173,10 +172,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userData = authProvider.userData;
     final int? userId = authProvider.userId;
     final String? fullName = userData != null && userData['user'] != null
-        ? (userData['user']['profile']['full_name'] ?? 
-           (userData['user']['profile']['first_name'] != null && userData['user']['profile']['last_name'] != null
-            ? '${userData['user']['profile']['first_name']} ${userData['user']['profile']['last_name']}'
-            : userData['user']['profile']['first_name'] ?? userData['user']['profile']['last_name']))
+        ? (userData['user']['profile']['full_name'] ??
+            (userData['user']['profile']['first_name'] != null &&
+                    userData['user']['profile']['last_name'] != null
+                ? '${userData['user']['profile']['first_name']} ${userData['user']['profile']['last_name']}'
+                : userData['user']['profile']['first_name'] ??
+                    userData['user']['profile']['last_name']))
         : null;
     final String? role = userData != null && userData['user'] != null
         ? userData['user']['email']
@@ -242,586 +243,580 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return true;
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.primaryGreen,
-        body: Stack(
-          children: [
-            // Fondo degradado superior
-            Container(
-              height: 260,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.darkBlue, AppColors.primaryGreen],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+      child: Stack(
+        children: [
+          // Fondo degradado superior
+          Container(
+            height: 260,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.darkBlue, AppColors.primaryGreen],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
-            // Contenido principal
-            SafeArea(
-              child: Column(
-                children: [
-                  SizedBox(height: 18),
-                  // Foto de perfil con borde y sombra
-                  Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.18),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: AppColors.lightBlueColor,
-                          width: 4,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 54,
-                        backgroundColor: Colors.transparent,
-                        child: ClipOval(
-                          child: profileImageUrl != null &&
-                                  profileImageUrl!.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: profileImageUrl!,
-                                  width: 108,
-                                  height: 108,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      ProfileImageSkeleton(radius: 54),
-                                  errorWidget: (context, url, error) =>
-                                      CircleAvatar(
-                                    radius: 54,
-                                    backgroundColor: AppColors.lightGreyColor,
-                                    child: Icon(Icons.person,
-                                        color: Colors.white, size: 48),
-                                  ),
-                                )
-                              : ProfileImageSkeleton(radius: 54),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 14),
-                  // Nombre y correo centrados
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          fullName ?? '',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          role ?? '',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 15,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+          ),
+          // Contenido principal
+          SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: 18),
+                // Foto de perfil con borde y sombra
+                Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.18),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
                         ),
                       ],
+                      border: Border.all(
+                        color: AppColors.lightBlueColor,
+                        width: 4,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 54,
+                      backgroundColor: Colors.transparent,
+                      child: ClipOval(
+                        child: profileImageUrl != null &&
+                                profileImageUrl!.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: profileImageUrl!,
+                                width: 108,
+                                height: 108,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) =>
+                                    ProfileImageSkeleton(radius: 54),
+                                errorWidget: (context, url, error) =>
+                                    CircleAvatar(
+                                  radius: 54,
+                                  backgroundColor: AppColors.lightGreyColor,
+                                  child: Icon(Icons.person,
+                                      color: Colors.white, size: 48),
+                                ),
+                              )
+                            : ProfileImageSkeleton(radius: 54),
+                      ),
                     ),
                   ),
-                  SizedBox(height: 18),
-                  // Bloque de estadísticas con animación y badges
-                  AnimatedContainer(
-                    duration: Duration(milliseconds: 500),
-                    curve: Curves.easeOutExpo,
-                    margin: const EdgeInsets.symmetric(horizontal: 18),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 18),
+                ),
+                SizedBox(height: 14),
+                // Nombre y correo centrados
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        fullName ?? '',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        role ?? '',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 15,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 18),
+                // Bloque de estadísticas con animación y badges
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 500),
+                  curve: Curves.easeOutExpo,
+                  margin: const EdgeInsets.symmetric(horizontal: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkBlue.withOpacity(0.98),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.10),
+                        blurRadius: 16,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _ProfileStat(
+                        icon: Icons.local_fire_department,
+                        label: 'Racha',
+                        value: '$streak días',
+                        color: AppColors.orangeprimary,
+                        badge: streak >= 7
+                            ? Icon(Icons.emoji_events,
+                                color: AppColors.yellowColor, size: 18)
+                            : null,
+                      ),
+                      _ProfileStat(
+                        icon: Icons.bookmark,
+                        label: 'Materia favorita',
+                        value:
+                            favoriteSubject.isNotEmpty ? favoriteSubject : '-',
+                        color: AppColors.lightBlueColor,
+                        badge: favoriteSubject.isNotEmpty
+                            ? Icon(Icons.star,
+                                color: AppColors.starYellow, size: 18)
+                            : null,
+                      ),
+                      _ProfileStat(
+                        icon: Icons.access_time,
+                        label: 'Tiempo total',
+                        value: totalHours > 0
+                            ? '$totalHours h $totalMins min'
+                            : '$totalMins min',
+                        color: AppColors.primaryGreen,
+                        badge: totalHours >= 10
+                            ? Icon(Icons.workspace_premium,
+                                color: AppColors.purpleColor, size: 18)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 18),
+                // Resto del contenido (opciones)
+                Expanded(
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.darkBlue.withOpacity(0.98),
-                      borderRadius: BorderRadius.circular(22),
+                      color: AppColors.darkBlue,
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(28)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.10),
-                          blurRadius: 16,
-                          offset: Offset(0, 6),
+                          blurRadius: 12,
+                          offset: Offset(0, -4),
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    child: ListView(
+                      padding: EdgeInsets.only(top: 18, bottom: 90),
                       children: [
-                        _ProfileStat(
-                          icon: Icons.local_fire_department,
-                          label: 'Racha',
-                          value: '$streak días',
-                          color: AppColors.orangeprimary,
-                          badge: streak >= 7
-                              ? Icon(Icons.emoji_events,
-                                  color: AppColors.yellowColor, size: 18)
-                              : null,
+                        // Botón de configuración de perfil
+                        ListTile(
+                          splashColor: Colors.transparent,
+                          leading: SvgPicture.asset(
+                            AppImages.personOutline,
+                            color: AppColors.whiteColor,
+                            width: 20,
+                            height: 20,
+                          ),
+                          title: Transform.translate(
+                            offset: const Offset(-10, 0.0),
+                            child: Text(
+                              'Configuración de Perfil',
+                              textScaler: TextScaler.noScaling,
+                              style: TextStyle(
+                                color: AppColors.whiteColor,
+                                fontSize: FontSize.scale(context, 16),
+                                fontFamily: 'SF-Pro-Text',
+                                fontWeight: FontWeight.w400,
+                                fontStyle: FontStyle.normal,
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditProfileScreen(),
+                              ),
+                            );
+                          },
                         ),
-                        _ProfileStat(
-                          icon: Icons.bookmark,
-                          label: 'Materia favorita',
-                          value: favoriteSubject.isNotEmpty
-                              ? favoriteSubject
-                              : '-',
-                          color: AppColors.lightBlueColor,
-                          badge: favoriteSubject.isNotEmpty
-                              ? Icon(Icons.star,
-                                  color: AppColors.starYellow, size: 18)
-                              : null,
+                        if (role == "tutor")
+                          ListTile(
+                            splashColor: Colors.transparent,
+                            leading: SvgPicture.asset(
+                              AppImages.insightsIcon,
+                              color: AppColors.whiteColor,
+                              width: 20,
+                              height: 20,
+                            ),
+                            title: Transform.translate(
+                              offset: const Offset(-10, 0.0),
+                              child: Text(
+                                'Estadísticas',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: FontSize.scale(context, 16),
+                                  fontFamily: 'SF-Pro-Text',
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.normal,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => InsightScreen()),
+                              );
+                            },
+                          ),
+                        if (role == "tutor")
+                          ListTile(
+                            splashColor: Colors.transparent,
+                            leading: SvgPicture.asset(
+                              AppImages.bookEducationIcon,
+                              color: AppColors.whiteColor,
+                              width: 20,
+                              height: 20,
+                            ),
+                            title: Transform.translate(
+                              offset: const Offset(-10, 0.0),
+                              child: Text(
+                                'Educación',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: FontSize.scale(context, 16),
+                                  fontFamily: 'SF-Pro-Text',
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.normal,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        EducationalDetailsScreen()),
+                              );
+                            },
+                          ),
+                        if (role == "tutor")
+                          ListTile(
+                            splashColor: Colors.transparent,
+                            leading: SvgPicture.asset(
+                              AppImages.briefcase,
+                              width: 20,
+                              height: 20,
+                              color: AppColors.whiteColor,
+                            ),
+                            title: Transform.translate(
+                              offset: const Offset(-10, 0.0),
+                              child: Text(
+                                'Experiencia',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: FontSize.scale(context, 16),
+                                  fontFamily: 'SF-Pro-Text',
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.normal,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ExperienceDetailsScreen()),
+                              );
+                            },
+                          ),
+                        if (role == "tutor")
+                          ListTile(
+                            splashColor: Colors.transparent,
+                            leading: SvgPicture.asset(
+                              color: AppColors.whiteColor,
+                              AppImages.certificateIcon,
+                              width: 20,
+                              height: 20,
+                            ),
+                            title: Transform.translate(
+                              offset: const Offset(-10, 0.0),
+                              child: Text(
+                                'Certificados',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: FontSize.scale(context, 16),
+                                  fontFamily: 'SF-Pro-Text',
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.normal,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => CertificateDetail()),
+                              );
+                            },
+                          ),
+                        if (role == "tutor")
+                          Divider(
+                            color: AppColors.dividerColor,
+                            height: 0,
+                            thickness: 0.7,
+                            indent: 15.0,
+                            endIndent: 15.0,
+                          ),
+                        ListTile(
+                          splashColor: Colors.transparent,
+                          leading: SvgPicture.asset(
+                            AppImages.settingIcon,
+                            width: 20,
+                            height: 20,
+                            color: AppColors.whiteColor,
+                          ),
+                          title: Transform.translate(
+                            offset: const Offset(-10, 0.0),
+                            child: Text(
+                              'Cambiar Contraseña',
+                              textScaler: TextScaler.noScaling,
+                              style: TextStyle(
+                                color: AppColors.whiteColor,
+                                fontSize: FontSize.scale(context, 16),
+                                fontFamily: 'SF-Pro-Text',
+                                fontWeight: FontWeight.w400,
+                                fontStyle: FontStyle.normal,
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AccountSettings()),
+                            );
+                          },
                         ),
-                        _ProfileStat(
-                          icon: Icons.access_time,
-                          label: 'Tiempo total',
-                          value: totalHours > 0
-                              ? '$totalHours h $totalMins min'
-                              : '$totalMins min',
-                          color: AppColors.primaryGreen,
-                          badge: totalHours >= 10
-                              ? Icon(Icons.workspace_premium,
-                                  color: AppColors.purpleColor, size: 18)
-                              : null,
+                        // Botón de cerrar sesión debajo de cambiar contraseña
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
+                          child: OutlinedButton.icon(
+                            onPressed: isLoading ? null : _logout,
+                            icon: Icon(
+                              Icons.power_settings_new,
+                              color: AppColors.redColor,
+                              size: 20.0,
+                            ),
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Cerrar sesión',
+                                  style: TextStyle(
+                                    color: Colors
+                                        .white, // Cambiado a blanco para contraste
+                                    fontFamily: 'SF-Pro-Text',
+                                    fontSize: FontSize.scale(context, 16),
+                                    fontWeight: FontWeight.w500,
+                                    fontStyle: FontStyle.normal,
+                                  ),
+                                ),
+                                if (isLoading) ...[
+                                  SizedBox(width: 10),
+                                  SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              side: BorderSide(
+                                  color: AppColors.redBorderColor, width: 0.7),
+                              backgroundColor:
+                                  AppColors.redColor, // Cambiado a rojo sólido
+                              minimumSize: Size(double.infinity, 50),
+                              textStyle: TextStyle(
+                                fontSize: FontSize.scale(context, 16),
+                              ),
+                            ),
+                          ),
                         ),
+                        if (role == "tutor")
+                          ListTile(
+                            splashColor: Colors.transparent,
+                            leading: SvgPicture.asset(
+                              AppImages.dollarIcon,
+                              width: 20,
+                              height: 20,
+                              color: AppColors.whiteColor,
+                            ),
+                            title: Transform.translate(
+                              offset: const Offset(-10, 0.0),
+                              child: Text(
+                                'Pagos',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: FontSize.scale(context, 16),
+                                  fontFamily: 'SF-Pro-Text',
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.normal,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => PayoutsHistory()),
+                              );
+                            },
+                          ),
+                        if (role == "student")
+                          ListTile(
+                            splashColor: Colors.transparent,
+                            leading: SvgPicture.asset(
+                              AppImages.invoicesIcon,
+                              width: 20,
+                              height: 22,
+                              color: AppColors.whiteColor,
+                            ),
+                            title: Transform.translate(
+                              offset: const Offset(-10, 0.0),
+                              child: Text(
+                                'Mis facturas',
+                                textScaler: TextScaler.noScaling,
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: FontSize.scale(context, 16),
+                                  fontFamily: 'SF-Pro-Text',
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.normal,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => InvoicesScreen()),
+                              );
+                            },
+                          ),
+                        // if (role == "student")
+                        // ListTile(
+                        //   splashColor: Colors.transparent,
+                        //   leading: SvgPicture.asset(
+                        //     AppImages.walletIcon,
+                        //     width: 20,
+                        //     height: 20,
+                        //     color: AppColors.whiteColor,
+                        //   ),
+                        //   title: Transform.translate(
+                        //     offset: const Offset(-10, 0.0),
+                        //     child: Text(
+                        //       'Datos de Facturación',
+                        //       textScaler: TextScaler.noScaling,
+                        //       style: TextStyle(
+                        //         color: AppColors.whiteColor,
+                        //         fontSize: FontSize.scale(context, 16),
+                        //         fontFamily: 'SF-Pro-Text',
+                        //         fontWeight: FontWeight.w400,
+                        //         fontStyle: FontStyle.normal,
+                        //       ),
+                        //     ),
+                        //   ),
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //           builder: (context) => BillingInformation()),
+                        //     );
+                        //   },
+                        // ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 18),
-                  // Resto del contenido (opciones)
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.darkBlue,
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(28)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.10),
-                            blurRadius: 12,
-                            offset: Offset(0, -4),
-                          ),
-                        ],
-                      ),
-                      child: ListView(
-                        padding: EdgeInsets.only(top: 18, bottom: 90),
-                        children: [
-                          // Botón de configuración de perfil
-                          ListTile(
-                            splashColor: Colors.transparent,
-                            leading: SvgPicture.asset(
-                              AppImages.personOutline,
-                              color: AppColors.whiteColor,
-                              width: 20,
-                              height: 20,
-                            ),
-                            title: Transform.translate(
-                              offset: const Offset(-10, 0.0),
-                              child: Text(
-                                'Configuración de Perfil',
-                                textScaler: TextScaler.noScaling,
-                                style: TextStyle(
-                                  color: AppColors.whiteColor,
-                                  fontSize: FontSize.scale(context, 16),
-                                  fontFamily: 'SF-Pro-Text',
-                                  fontWeight: FontWeight.w400,
-                                  fontStyle: FontStyle.normal,
-                                ),
-                              ),
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditProfileScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          if (role == "tutor")
-                            ListTile(
-                              splashColor: Colors.transparent,
-                              leading: SvgPicture.asset(
-                                AppImages.insightsIcon,
-                                color: AppColors.whiteColor,
-                                width: 20,
-                                height: 20,
-                              ),
-                              title: Transform.translate(
-                                offset: const Offset(-10, 0.0),
-                                child: Text(
-                                  'Estadísticas',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: FontSize.scale(context, 16),
-                                    fontFamily: 'SF-Pro-Text',
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => InsightScreen()),
-                                );
-                              },
-                            ),
-                          if (role == "tutor")
-                            ListTile(
-                              splashColor: Colors.transparent,
-                              leading: SvgPicture.asset(
-                                AppImages.bookEducationIcon,
-                                color: AppColors.whiteColor,
-                                width: 20,
-                                height: 20,
-                              ),
-                              title: Transform.translate(
-                                offset: const Offset(-10, 0.0),
-                                child: Text(
-                                  'Educación',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: FontSize.scale(context, 16),
-                                    fontFamily: 'SF-Pro-Text',
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          EducationalDetailsScreen()),
-                                );
-                              },
-                            ),
-                          if (role == "tutor")
-                            ListTile(
-                              splashColor: Colors.transparent,
-                              leading: SvgPicture.asset(
-                                AppImages.briefcase,
-                                width: 20,
-                                height: 20,
-                                color: AppColors.whiteColor,
-                              ),
-                              title: Transform.translate(
-                                offset: const Offset(-10, 0.0),
-                                child: Text(
-                                  'Experiencia',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: FontSize.scale(context, 16),
-                                    fontFamily: 'SF-Pro-Text',
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ExperienceDetailsScreen()),
-                                );
-                              },
-                            ),
-                          if (role == "tutor")
-                            ListTile(
-                              splashColor: Colors.transparent,
-                              leading: SvgPicture.asset(
-                                color: AppColors.whiteColor,
-                                AppImages.certificateIcon,
-                                width: 20,
-                                height: 20,
-                              ),
-                              title: Transform.translate(
-                                offset: const Offset(-10, 0.0),
-                                child: Text(
-                                  'Certificados',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: FontSize.scale(context, 16),
-                                    fontFamily: 'SF-Pro-Text',
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          CertificateDetail()),
-                                );
-                              },
-                            ),
-                          if (role == "tutor")
-                            Divider(
-                              color: AppColors.dividerColor,
-                              height: 0,
-                              thickness: 0.7,
-                              indent: 15.0,
-                              endIndent: 15.0,
-                            ),
-                          ListTile(
-                            splashColor: Colors.transparent,
-                            leading: SvgPicture.asset(
-                              AppImages.settingIcon,
-                              width: 20,
-                              height: 20,
-                              color: AppColors.whiteColor,
-                            ),
-                            title: Transform.translate(
-                              offset: const Offset(-10, 0.0),
-                              child: Text(
-                                'Cambiar Contraseña',
-                                textScaler: TextScaler.noScaling,
-                                style: TextStyle(
-                                  color: AppColors.whiteColor,
-                                  fontSize: FontSize.scale(context, 16),
-                                  fontFamily: 'SF-Pro-Text',
-                                  fontWeight: FontWeight.w400,
-                                  fontStyle: FontStyle.normal,
-                                ),
-                              ),
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AccountSettings()),
-                              );
-                            },
-                          ),
-                          // Botón de cerrar sesión debajo de cambiar contraseña
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 8),
-                            child: OutlinedButton.icon(
-                              onPressed: isLoading ? null : _logout,
-                              icon: Icon(
-                                Icons.power_settings_new,
-                                color: AppColors.redColor,
-                                size: 20.0,
-                              ),
-                              label: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Cerrar sesión',
-                                    style: TextStyle(
-                                      color: Colors
-                                          .white, // Cambiado a blanco para contraste
-                                      fontFamily: 'SF-Pro-Text',
-                                      fontSize: FontSize.scale(context, 16),
-                                      fontWeight: FontWeight.w500,
-                                      fontStyle: FontStyle.normal,
-                                    ),
-                                  ),
-                                  if (isLoading) ...[
-                                    SizedBox(width: 10),
-                                    SizedBox(
-                                      height: 16,
-                                      width: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.primaryGreen,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                side: BorderSide(
-                                    color: AppColors.redBorderColor,
-                                    width: 0.7),
-                                backgroundColor: AppColors
-                                    .redColor, // Cambiado a rojo sólido
-                                minimumSize: Size(double.infinity, 50),
-                                textStyle: TextStyle(
-                                  fontSize: FontSize.scale(context, 16),
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (role == "tutor")
-                            ListTile(
-                              splashColor: Colors.transparent,
-                              leading: SvgPicture.asset(
-                                AppImages.dollarIcon,
-                                width: 20,
-                                height: 20,
-                                color: AppColors.whiteColor,
-                              ),
-                              title: Transform.translate(
-                                offset: const Offset(-10, 0.0),
-                                child: Text(
-                                  'Pagos',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: FontSize.scale(context, 16),
-                                    fontFamily: 'SF-Pro-Text',
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => PayoutsHistory()),
-                                );
-                              },
-                            ),
-                          if (role == "student")
-                            ListTile(
-                              splashColor: Colors.transparent,
-                              leading: SvgPicture.asset(
-                                AppImages.invoicesIcon,
-                                width: 20,
-                                height: 22,
-                                color: AppColors.whiteColor,
-                              ),
-                              title: Transform.translate(
-                                offset: const Offset(-10, 0.0),
-                                child: Text(
-                                  'Mis facturas',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    color: AppColors.whiteColor,
-                                    fontSize: FontSize.scale(context, 16),
-                                    fontFamily: 'SF-Pro-Text',
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => InvoicesScreen()),
-                                );
-                              },
-                            ),
-                          // if (role == "student")
-                          // ListTile(
-                          //   splashColor: Colors.transparent,
-                          //   leading: SvgPicture.asset(
-                          //     AppImages.walletIcon,
-                          //     width: 20,
-                          //     height: 20,
-                          //     color: AppColors.whiteColor,
-                          //   ),
-                          //   title: Transform.translate(
-                          //     offset: const Offset(-10, 0.0),
-                          //     child: Text(
-                          //       'Datos de Facturación',
-                          //       textScaler: TextScaler.noScaling,
-                          //       style: TextStyle(
-                          //         color: AppColors.whiteColor,
-                          //         fontSize: FontSize.scale(context, 16),
-                          //         fontFamily: 'SF-Pro-Text',
-                          //         fontWeight: FontWeight.w400,
-                          //         fontStyle: FontStyle.normal,
-                          //       ),
-                          //     ),
-                          //   ),
-                          //   onTap: () {
-                          //     Navigator.push(
-                          //       context,
-                          //       MaterialPageRoute(
-                          //           builder: (context) => BillingInformation()),
-                          //     );
-                          //   },
-                          // ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            SizedBox(height: 20),
-            // Padding(
-            //   padding: const EdgeInsets.only(right: 15, left: 15),
-            //   child: Consumer<AuthProvider>(
-            //     builder: (context, authProvider, child) {
-            //       final userData = authProvider.userData;
-            //       String balance =
-            //           userData?['user']?['balance']?.toString() ?? "0.00";
-            //
-            //       return Container(
-            //         padding: EdgeInsets.all(10.0),
-            //         height: 55,
-            //         decoration: BoxDecoration(
-            //           color: AppColors.primaryWhiteColor,
-            //           borderRadius: BorderRadius.circular(8),
-            //         ),
-            //         child: Row(
-            //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //           crossAxisAlignment: CrossAxisAlignment.center,
-            //           children: [
-            //             Row(
-            //               children: [
-            //                 SvgPicture.asset(
-            //                   AppImages.walletIcon,
-            //                   width: 20,
-            //                   height: 20,
-            //                   color: AppColors.greyColor,
-            //                 ),
-            //                 SizedBox(width: 10),
-            //                 Text(
-            //                   'Balance de Billetera',
-            //                   style: TextStyle(
-            //                     color: AppColors.greyColor,
-            //                     fontSize: FontSize.scale(context, 16),
-            //                     fontFamily: 'SF-Pro-Text',
-            //                     fontWeight: FontWeight.w400,
-            //                     fontStyle: FontStyle.normal,
-            //                   ),
-            //                 ),
-            //               ],
-            //             ),
-            //             Text(
-            //               '\$$balance',
-            //               style: TextStyle(
-            //                 color: AppColors.blackColor,
-            //                 fontSize: FontSize.scale(context, 18),
-            //                 fontFamily: 'SF-Pro-Text',
-            //                 fontWeight: FontWeight.w600,
-            //                 fontStyle: FontStyle.normal,
-            //               ),
-            //             ),
-            //           ],
-            //         ),
-            //       );
-            //     },
-            //   ),
-            // ),
-          ],
-        ),
+          ),
+          SizedBox(height: 20),
+          // Padding(
+          //   padding: const EdgeInsets.only(right: 15, left: 15),
+          //   child: Consumer<AuthProvider>(
+          //     builder: (context, authProvider, child) {
+          //       final userData = authProvider.userData;
+          //       String balance =
+          //           userData?['user']?['balance']?.toString() ?? "0.00";
+          //
+          //       return Container(
+          //         padding: EdgeInsets.all(10.0),
+          //         height: 55,
+          //         decoration: BoxDecoration(
+          //           color: AppColors.primaryWhiteColor,
+          //           borderRadius: BorderRadius.circular(8),
+          //         ),
+          //         child: Row(
+          //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //           crossAxisAlignment: CrossAxisAlignment.center,
+          //           children: [
+          //             Row(
+          //               children: [
+          //                 SvgPicture.asset(
+          //                   AppImages.walletIcon,
+          //                   width: 20,
+          //                   height: 20,
+          //                   color: AppColors.greyColor,
+          //                 ),
+          //                 SizedBox(width: 10),
+          //                 Text(
+          //                   'Balance de Billetera',
+          //                   style: TextStyle(
+          //                     color: AppColors.greyColor,
+          //                     fontSize: FontSize.scale(context, 16),
+          //                     fontFamily: 'SF-Pro-Text',
+          //                     fontWeight: FontWeight.w400,
+          //                     fontStyle: FontStyle.normal,
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //             Text(
+          //               '\$$balance',
+          //               style: TextStyle(
+          //                 color: AppColors.blackColor,
+          //                 fontSize: FontSize.scale(context, 18),
+          //                 fontFamily: 'SF-Pro-Text',
+          //                 fontWeight: FontWeight.w600,
+          //                 fontStyle: FontStyle.normal,
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ),
+        ],
       ),
     );
   }

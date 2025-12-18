@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/view/layout/main_shell.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_projects/provider/booking_provider.dart';
 import 'package:flutter_projects/styles/app_styles.dart';
@@ -109,7 +110,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
               icon: Icon(Icons.arrow_back_ios, color: Colors.white, size: 24),
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                  MaterialPageRoute(builder: (context) => MainShell()),
                   (route) => false,
                 );
               },
