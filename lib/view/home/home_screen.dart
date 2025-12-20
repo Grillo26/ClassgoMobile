@@ -37,6 +37,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 import 'package:flutter_projects/view/home/widgets/tutor_card.dart';
 import 'package:flutter_projects/view/home/widgets/alliance_card.dart';
+import 'package:flutter_projects/view/home/widgets/animated_dots.dart';
 
 
 // 1. Agrega RouteObserver para detectar cuando se vuelve a la pantalla principal
@@ -1104,7 +1105,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                                                       textAlign: TextAlign.center,
                                                                                     ),
                                                                                     SizedBox(height: 24),
-                                                                                    _AnimatedDots(),
+                                                                                    AnimatedDots(),
                                                                                   ],
                                                                                 ),
                                                                               ),
@@ -2374,7 +2375,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                                                 textAlign: TextAlign.center,
                                                                               ),
                                                                               SizedBox(height: 24),
-                                                                              _AnimatedDots(),
+                                                                              AnimatedDots(),
                                                                             ],
                                                                           ),
                                                                         ),
@@ -3336,53 +3337,7 @@ class _StartJourneyCard extends StatelessWidget {
   }
 }
 
-class _AnimatedDots extends StatefulWidget {
-  @override
-  State<_AnimatedDots> createState() => _AnimatedDotsState();
-}
 
-class _AnimatedDotsState extends State<_AnimatedDots>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<int> _dotsAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: Duration(milliseconds: 1200),
-      vsync: this,
-    )..repeat();
-    _dotsAnimation = StepTween(begin: 1, end: 3).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose(); // Corregido: liberar el AnimationController
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _dotsAnimation,
-      builder: (context, child) {
-        String dots = '.' * _dotsAnimation.value;
-        return Text(
-          'Buscando$dots',
-          style: TextStyle(
-            color: AppColors.orangeprimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-          ),
-        );
-      },
-    );
-  }
-}
 
 class _CustomDrawerHeader extends StatelessWidget {
   final AuthProvider authProvider;
