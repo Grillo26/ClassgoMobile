@@ -36,6 +36,7 @@ import 'package:vibration/vibration.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import 'package:flutter_projects/view/home/widgets/tutor_card.dart';
+import 'package:flutter_projects/view/home/widgets/alliance_card.dart';
 
 
 // 1. Agrega RouteObserver para detectar cuando se vuelve a la pantalla principal
@@ -1475,7 +1476,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                 launchUrl(Uri.parse(enlace));
                                               }
                                             },
-                                            child: _AllianceCard(
+                                            child: AllianceCard(
                                               logoUrl: logoUrl,
                                               name: name,
                                               color: color,
@@ -3264,59 +3265,7 @@ class _StepCard extends StatelessWidget {
   }
 }
 
-class _AllianceCard extends StatelessWidget {
-  final String logoUrl;
-  final String name;
-  final Color color;
 
-  const _AllianceCard({
-    required this.logoUrl,
-    required this.name,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 120,
-      height: 160,
-      margin: EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              logoUrl,
-              width: 80,
-              height: 80,
-              fit: BoxFit.contain,
-            ),
-          ),
-          SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              name,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _StartJourneyCard extends StatelessWidget {
   final VoidCallback? onButtonPressed;
