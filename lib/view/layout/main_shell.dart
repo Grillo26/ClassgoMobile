@@ -48,6 +48,18 @@ class _MainShellState extends State<MainShell> {
           ProfileScreen(),
         ],
       ),
+      
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => (),
+        backgroundColor: const Color.fromARGB(255, 251, 133, 0),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.flash_on, color: Colors.white, size: 30),
+
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
+      
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 2, 48, 71),
         currentIndex: _currentIndex,
@@ -61,8 +73,15 @@ class _MainShellState extends State<MainShell> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
+
           BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month), label: 'Agenda'),
+            icon: Padding(
+              padding: EdgeInsets.only(top: 24), 
+              child: SizedBox.shrink(),
+            ),
+            label: 'Tutoría Ya!'),
+          // BottomNavigationBarItem(
+          //     icon: Icon(Icons.calendar_month), label: 'Agenda'),
           BottomNavigationBarItem(
               icon: Icon(Icons.history), label: 'Historial'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
