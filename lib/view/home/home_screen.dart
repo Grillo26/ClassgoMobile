@@ -5,7 +5,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_projects/api_structure/api_service.dart';
+import 'package:flutter_projects/provider/booking_provider.dart';
+import 'package:flutter_projects/services/sound_service.dart';
+import 'package:flutter_projects/services/vibration_service.dart';
 import 'package:flutter_projects/styles/app_styles.dart';
+import 'package:flutter_projects/view/home/widgets/success_dialog.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,21 +28,21 @@ import 'package:flutter_projects/helpers/pusher_service.dart';
 import 'package:flutter_projects/helpers/auth_helper.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_projects/view/components/tutoring_status_cards.dart';
-import 'package:flutter_projects/view/detailPage/detail_screen.dart';
-import 'package:flutter_projects/view/profile/profile_screen.dart';
-import 'package:flutter_projects/view/tutor/student_calendar_screen.dart';
-import 'package:flutter_projects/view/tutor/student_history_screen.dart';
-import 'package:flutter_projects/view/tutor/payment_qr_screen.dart';
-import 'package:flutter_projects/view/tutor/booking_success_screen.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:vibration/vibration.dart';
+
 import 'package:audioplayers/audioplayers.dart';
 
 import 'package:flutter_projects/view/home/widgets/tutor_card.dart';
 import 'package:flutter_projects/view/home/widgets/alliance_card.dart';
 import 'package:flutter_projects/view/home/widgets/animated_dots.dart';
 
+import 'widgets/upcoming_session_banner.dart';
+import 'widgets/step_card.dart';
+import 'widgets/start_journey_card.dart';
+import 'widgets/custom_drawer_header.dart';
+import 'widgets/booking_detail_modal.dart';
+import 'widgets/tutor_card2.dart';
+import 'widgets/menu_item.dart';
+import 'widgets/menu_option.dart';
 
 // 1. Agrega RouteObserver para detectar cuando se vuelve a la pantalla principal
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -62,8 +66,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin, RouteAware {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, RouteAware {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   String _searchQuery = '';
@@ -73,8 +76,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _currentPageSubjects = 1;
   bool _hasMoreSubjects = true;
   bool _isModalLoading = true;
-  final int _subjectsPerPage =
-      100; // Aumentado a 100 para cargar más materias de una vez
+  final int _subjectsPerPage = 100;
 
   // Variables para el manejo de videos y scroll
   final ScrollController _scrollController = ScrollController();
@@ -100,75 +102,6 @@ class _HomeScreenState extends State<HomeScreen>
       viewportFraction: 1.0); // Aumentado para más a la izquierda
 
   // Función helper para abrir enlaces de redes sociales
-  Future<void> _openSocialMediaLink(String url, String platform) async {
-    try {
-      // Primero intentamos abrir con LaunchMode.externalApplication
-      if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        );
-
-        // Mostrar confirmación al usuario
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Abriendo $platform...'),
-              backgroundColor: AppColors.primaryGreen,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      } else {
-        // Si falla, intentamos con el navegador
-        final webUrl = url;
-        if (await canLaunchUrl(Uri.parse(webUrl))) {
-          await launchUrl(Uri.parse(webUrl));
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Abriendo $platform en el navegador...'),
-                backgroundColor: AppColors.lightBlueColor,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        }
-      }
-    } catch (e) {
-      print('Error al abrir $platform: $e');
-      // Último recurso: intentar abrir en el navegador
-      try {
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url));
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Abriendo $platform...'),
-                backgroundColor: AppColors.primaryGreen,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        }
-      } catch (e2) {
-        print('Error final al abrir $platform: $e2');
-
-        // Mostrar error al usuario
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al abrir $platform. Intenta de nuevo.'),
-              backgroundColor: AppColors.redColor,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    }
-  }
 
   // En el estado:
   final double tutorCardWidth = 280.0;
@@ -187,129 +120,31 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<Map<String, dynamic>> _todaysBookings = [];
   bool _isLoadingBookings = true;
-  int _bookingUpdateTimestamp =
+  int bookingUpdateTimestamp =
       0; // Para forzar reconstrucción en eventos Pusher
 
   AuthProvider? _authProvider;
   int? _lastFetchedUserId;
 
-  Timer? _bookingsTimer;
+  Timer? bookingsTimer;
 
   // Cache para datos de slots y tutor images
-  final Map<int, Map<String, dynamic>> _slotDataCache = {};
-  final Map<int, String?> _tutorImageCache = {};
+  final Map<int, Map<String, dynamic>> slotDataCache = {};
+  final Map<int, String?> tutorImageCache = {};
 
   // Control para evitar doble reproducción de sonido
   static DateTime? _lastSoundPlayed;
   static String? _lastSoundStatus;
 
   // Función para reproducir sonido de cambio de estado
-  static Future<void> _playStatusChangeSound([String? status]) async {
-    try {
-      final now = DateTime.now();
-
-      // Evitar doble reproducción: solo reproducir si han pasado más de 2 segundos
-      // o si es un estado diferente al último reproducido
-      if (_lastSoundPlayed != null &&
-          now.difference(_lastSoundPlayed!).inSeconds < 2 &&
-          _lastSoundStatus == status) {
-        print('🔇 Evitando doble reproducción de sonido');
-        return;
-      }
-
-      print('🔊 Reproduciendo sonido de cambio de estado...');
-      final audioPlayer = AudioPlayer();
-      await audioPlayer.play(AssetSource('sounds/cambioEstado.mp3'));
-
-      // Actualizar control de tiempo y estado
-      _lastSoundPlayed = now;
-      _lastSoundStatus = status;
-
-      print('✅ Sonido reproducido exitosamente');
-    } catch (e) {
-      print('❌ Error reproduciendo sonido: $e');
-    }
-  }
+  // ahora sound_service.dart
+  
 
   // Función para vibrar según el estado de la tutoría
-  Future<void> _vibrateForStatus(String status) async {
-    try {
-      final hasVibrator = await Vibration.hasVibrator();
-
-      if (hasVibrator ?? false) {
-        switch (status.toLowerCase()) {
-          case 'aceptada':
-          case 'aceptado':
-            // Vibración larga para aceptación
-            await Vibration.vibrate(duration: 800);
-            break;
-          case 'rechazada':
-          case 'rechazado':
-            // Vibración corta para rechazo
-            await Vibration.vibrate(duration: 300);
-            break;
-          case 'cursando':
-            // Patrón especial para inicio de tutoría
-            await Vibration.vibrate(pattern: [0, 400, 100, 400, 100, 400]);
-            break;
-          case 'pendiente':
-            // Vibración suave para actualización
-            await Vibration.vibrate(duration: 200);
-            break;
-          default:
-            // Vibración por defecto
-            await Vibration.vibrate(duration: 500);
-        }
-      }
-    } catch (e) {
-      print('Error al vibrar: $e');
-    }
-  }
+  // ahora en vibration_service.dart
 
   // Función para refrescar los datos de un booking específico
-  Future<void> _refreshBookingData(int bookingId) async {
-    try {
-      print('🔄 Refrescando datos del booking ID: $bookingId');
-
-      // Obtener los datos actualizados del servidor
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final token = authProvider.token;
-      final userId = authProvider.userId;
-
-      if (token != null && userId != null) {
-        final bookings = await getUserBookingsById(token, userId);
-
-        // Encontrar el booking actualizado
-        final updatedBooking = bookings.firstWhere(
-          (booking) => booking['id'] == bookingId,
-          orElse: () => <String, dynamic>{},
-        );
-
-        if (updatedBooking.isNotEmpty) {
-          print(
-              '🔄 Booking actualizado encontrado: ${updatedBooking['meeting_link']}');
-
-          // Actualizar la lista local con los datos frescos
-          setState(() {
-            _todaysBookings = _todaysBookings.map((booking) {
-              if (booking['id'] == bookingId) {
-                print('🔄 Actualizando booking con datos frescos del servidor');
-                return updatedBooking;
-              }
-              return booking;
-            }).toList();
-            _bookingUpdateTimestamp = DateTime.now().millisecondsSinceEpoch;
-          });
-
-          print('✅ Booking actualizado exitosamente con datos frescos');
-        } else {
-          print('❌ No se encontró el booking actualizado en el servidor');
-        }
-      }
-    } catch (e) {
-      print('❌ Error refrescando datos del booking: $e');
-    }
-  }
+  // ahora en booking_provider
 
   @override
   void initState() {
@@ -322,159 +157,50 @@ class _HomeScreenState extends State<HomeScreen>
     fetchInitialSubjects();
     fetchHighResTutorImages();
 
-    // _initPusherService(); // Elimino inicialización local
     if (widget.showVerificationSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final player = AudioPlayer();
         await player.play(AssetSource('sounds/success.mp3'));
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Center(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.lightBlueColor.withOpacity(0.18),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle,
-                      color: AppColors.orangeprimary, size: 54),
-                  SizedBox(height: 16),
-                  Text(
-                    widget.verificationMessage ??
-                        '¡Correo verificado correctamente!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+
+        SuccessDialog.show(context, widget.verificationMessage);
+
         await Future.delayed(Duration(milliseconds: 2500));
-        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
       });
     }
+
+    
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    
+    // 1. Sincronizar Auth
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (_authProvider != authProvider) {
-      // Remover listener anterior si existe
       _authProvider?.removeListener(_checkAndFetchBookings);
-
       _authProvider = authProvider;
       _checkAndFetchBookings();
       _authProvider!.addListener(_checkAndFetchBookings);
     }
-    // Suscríbete al RouteObserver
+
+    // 2. Suscribir Navegación
     routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
 
-    // Inicializa PusherService global solo una vez
+    // 3. Pusher Simplificado
     final pusherService = Provider.of<PusherService>(context, listen: false);
-    print('🎯 Configurando callback de Pusher en HomeScreen');
+    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
     pusherService.init(
       onSlotBookingStatusChanged: (data) {
-        print('📡 Evento del canal recibido: $data');
-
-        try {
-          // Parsear el JSON del evento
-          Map<String, dynamic> eventData;
-          if (data is String) {
-            eventData = json.decode(data);
-          } else if (data is Map<String, dynamic>) {
-            eventData = data;
-          } else {
-            print('❌ Formato de data no válido');
-            return;
-          }
-
-          // Obtener el student_id del evento
-          final int? eventStudentId = eventData['student_id'];
-
-          // Obtener el ID del usuario logueado
-          final int? currentUserId =
-              Provider.of<AuthProvider>(context, listen: false).userId;
-
-          print(
-              '🔍 Comparando: student_id del evento: $eventStudentId, usuario logueado: $currentUserId');
-
-          // Verificar si el evento es para el usuario logueado
-          if (eventStudentId != null &&
-              currentUserId != null &&
-              eventStudentId == currentUserId) {
-            print(
-                '✅ Evento relevante para este usuario, actualizando estado de tutoría...');
-
-            // Extraer información del evento
-            final int? slotBookingId = eventData['slotBookingId'];
-            final String? newStatus = eventData['newStatus'];
-
-            print(
-                '🔄 Actualizando tutoría ID: $slotBookingId al estado: $newStatus');
-
-            // Reproducir sonido y hacer vibrar según el nuevo estado
-            _HomeScreenState._playStatusChangeSound(newStatus);
-            _vibrateForStatus(newStatus ?? '');
-
-            // Si el estado cambia a cursando, necesitamos actualizar los datos completos
-            if (newStatus == '6' || newStatus == 'cursando') {
-              print(
-                  '🔄 Estado cambió a cursando, actualizando datos completos...');
-              // Refrescar los datos desde el servidor para obtener el meeting_link actualizado
-              _refreshBookingData(slotBookingId!);
-            } else {
-              // Para otros estados, solo actualizar el status
-              setState(() {
-                _todaysBookings = _todaysBookings.map((booking) {
-                  if (booking['id'] == slotBookingId) {
-                    print(
-                        '🔄 Actualizando booking ID: ${booking['id']} de estado: ${booking['status']} a: $newStatus');
-                    return {...booking, 'status': newStatus};
-                  }
-                  return booking;
-                }).toList();
-                _bookingUpdateTimestamp = DateTime.now()
-                    .millisecondsSinceEpoch; // Forzar reconstrucción
-                print(
-                    '✅ Tutoría actualizada en la lista local (nueva referencia)');
-                print(
-                    '📊 Lista actualizada: ${_todaysBookings.map((b) => 'ID:${b['id']}-Status:${b['status']}').join(', ')}');
-              });
-            }
-
-            // La actualización local es suficiente, no necesitamos refrescar desde el servidor
-            // ya que el evento del canal nos da la información actualizada
-          } else {
-            print('⏩ Evento ignorado (no es para este usuario)');
-          }
-        } catch (e) {
-          print('❌ Error procesando evento: $e');
-        }
+        // Delegamos toda la lógica sucia al Provider
+        bookingProvider.handlePusherUpdate(data, authProvider.userId);
       },
       context: context,
     );
-
-    // Verificar estado de suscripción después de inicializar
-    Future.delayed(Duration(seconds: 2), () {
-      pusherService.checkSubscriptionStatus();
-    });
   }
 
   @override
@@ -498,48 +224,20 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  // Refresca los bookings al volver a la pantalla principal
   @override
   void didPopNext() {
-    _fetchTodaysBookings();
-  }
-
-  Future<void> _fetchTodaysBookings() async {
-    print('Ejecutando _fetchTodaysBookings...');
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final token = authProvider.token;
-      final userId = authProvider.userId;
-      print('ID del usuario logueado para bookings: $userId');
-      if (token != null && userId != null) {
-        final bookings = await getUserBookingsById(token, userId);
-        if (bookings.isNotEmpty) {
-          print('Booking recibido: ' + jsonEncode(bookings[0]));
-        }
-        print('Tutorías obtenidas para el usuario: ${bookings.length}');
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        _todaysBookings = bookings.where((b) {
-          // Filtrar tutorías completadas y rechazadas
-          if (b['status'] == 'Completado' || b['status'] == 'Rechazado')
-            return false;
-          final start = DateTime.tryParse(b['start_time'] ?? '') ?? now;
-          return start.year == today.year &&
-              start.month == today.month &&
-              start.day == today.day;
-        }).toList();
-        print('Tutorías filtradas para hoy: ${_todaysBookings.length}');
-        print('Tutorías filtradas: ' + _todaysBookings.toString());
-      }
-    } catch (e) {
-      print('Error al obtener tutorías del usuario: $e');
-      _todaysBookings = [];
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    
+    if (auth.token != null && auth.userId != null) {
+      //En booking_provider.dart
+      context.read<BookingProvider>().fetchTodaysBookings(
+        auth.token!, 
+        auth.userId!,
+      );
     }
-    setState(() {
-      _isLoadingBookings = false;
-    });
   }
 
+  //Desde aqui empieza la vista
   @override
   Widget build(BuildContext context) {
     // Usar un key único para evitar rebuilds innecesarios
@@ -551,9 +249,17 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_pattern.png', // Cambia la ruta si tu asset es diferente
-              fit: BoxFit.cover,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xff023047), // Primer color
+                    Color(0xff219EBC), // Segundo color
+                  ],
+                ),
+              ),
             ),
           ),
           // Main content (ScrollView)
@@ -659,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Builder(
-                                builder: (context) => _buildMenuOption(
+                                builder: (context) => buildMenuOption(
                                   context,
                                   icon: Icons.flash_on,
                                   label: 'Tutor\nal Instante',
@@ -1263,7 +969,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   },
                                 ),
                               ),
-                              _buildMenuOption(
+                              buildMenuOption(
                                 context,
                                 icon: Icons.calendar_today,
                                 label: 'Agendar\nTutoría',
@@ -1283,7 +989,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   );
                                 },
                               ),
-                              _buildMenuOption(
+                              buildMenuOption(
                                 context,
                                 icon: Icons.explore,
                                 label: 'Explorar\nTutores',
@@ -1322,7 +1028,59 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ),
+
                   // Tutores destacados
+                  // Container(
+                  //   width: double.infinity,
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.white,
+                  //     borderRadius: BorderRadius.only(
+                  //       topLeft: Radius.circular(30),
+                  //       topRight: Radius.circular(30),
+                  //     ),
+                  //   ),
+
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.symmetric(
+                  //         horizontal: 16.0, vertical: 18),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         Text(
+                  //           'Tutores destacados',
+                  //           style: TextStyle(
+                  //             color: Color(0xff023047),
+                  //             fontSize: 15,
+                  //           ),
+                  //         ),
+                  //         SizedBox(height: 4),
+                  //         Text(
+                  //           'Conoce a Nuestros Tutores\nCuidadosamente Seleccionados',
+                  //           style: TextStyle(
+                  //             color: Color(0xff023047),
+                  //             fontWeight: FontWeight.bold,
+                  //             fontSize: 18,
+                  //           ),
+                  //         ),
+                  //         // ... dentro de tu Column después del último Text ...
+                  //         SizedBox(height: 16),
+                  //         SizedBox(
+                  //           height: 420, // Altura total de las tarjetas
+                  //           child: ListView.builder(
+                  //             scrollDirection: Axis.horizontal,
+                  //             itemCount: 5, // Número de tutores
+                  //             physics: const BouncingScrollPhysics(),
+                  //             padding: EdgeInsets.only(left: 4), // Para alinear con el texto
+                  //             itemBuilder: (context, index) {
+                  //               return _buildTutorCard();
+                  //             },
+                  //           ),
+                  //         ),
+                  //       ]
+                  //     )
+                  //   )
+                  // ),
+
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -1768,130 +1526,6 @@ class _HomeScreenState extends State<HomeScreen>
       Navigator.of(context).pop(); // Cerrar el diálogo de carga
       navigationCallback(); // Ejecutar la navegación
     });
-  }
-
-  Widget _buildMenuOption(BuildContext context,
-      {required IconData icon,
-      required String label,
-      required VoidCallback onTap,
-      String? imageAsset}) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.08),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (imageAsset != null)
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.asset(
-                      imageAsset,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        print('❌ Error cargando imagen $imageAsset: $error');
-                        return Icon(icon, color: Colors.white, size: 60);
-                      },
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 40),
-                ),
-              SizedBox(height: 4),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _showSearchModal() {
@@ -3063,10 +2697,14 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _checkAndFetchBookings() {
-    final userId = _authProvider!.userId;
-    if (userId != null && userId != _lastFetchedUserId) {
+    // Verificamos que el Provider y el userId existan
+    final userId = _authProvider?.userId;
+    final token = _authProvider?.token;
+
+    if (userId != null && token != null && userId != _lastFetchedUserId) {
       _lastFetchedUserId = userId;
-      _fetchTodaysBookings();
+      //En el archivo booking_provider.dart      
+      context.read<BookingProvider>().fetchTodaysBookings(token, userId);
     }
   }
 
@@ -3153,348 +2791,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-class _StepCard extends StatelessWidget {
-  final String step;
-  final String title;
-  final String description;
-  final String buttonText;
-  final String imageUrl;
-  final VoidCallback? onButtonPressed;
-
-  const _StepCard({
-    required this.step,
-    required this.title,
-    required this.description,
-    required this.buttonText,
-    required this.imageUrl,
-    this.onButtonPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      margin: EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-            child: Image.network(
-              imageUrl,
-              height: 80,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          margin: EdgeInsets.only(top: 2, bottom: 6),
-                          decoration: BoxDecoration(
-                            color: Color(0xFFFF9900),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(step,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12)),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          title,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Color(0xFF0B3C5D)),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          description,
-                          style: TextStyle(fontSize: 12, color: Colors.black87),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 2.0),
-                    child: Center(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFF9900),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                        ),
-                        onPressed: onButtonPressed,
-                        child: Text(buttonText,
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-class _StartJourneyCard extends StatelessWidget {
-  final VoidCallback? onButtonPressed;
-
-  const _StartJourneyCard({this.onButtonPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    return Container(
-      width: isMobile ? 240 : 280,
-      margin: EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        color: Color(0xFF073B4C),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Icon(Icons.layers, color: Colors.white, size: 38),
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Comienza tu Jornada',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Comienza tu viaje educativo con nosotros. ¡Encuentra un tutor y reserva tu primera sesión hoy mismo!',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: 14,
-            ),
-          ),
-          SizedBox(height: 18),
-          Center(
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF9900),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              ),
-              onPressed: onButtonPressed,
-              icon: Icon(Icons.arrow_forward, color: Colors.white),
-              label: Text('Empieza Ahora',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-class _CustomDrawerHeader extends StatelessWidget {
-  final AuthProvider authProvider;
-  final Map<int, String> highResTutorImages;
-
-  const _CustomDrawerHeader(
-      {required this.authProvider, required this.highResTutorImages});
-
-  @override
-  Widget build(BuildContext context) {
-    final userData = authProvider.userData;
-
-    // Corregir la URL de la imagen si es necesario
-    String? imageUrl = userData?['user']?['profile']?['image'];
-    int? userId = userData?['user']?['id'];
-    String? hdImageUrl =
-        (userId != null && highResTutorImages.containsKey(userId))
-            ? highResTutorImages[userId]
-            : null;
-    if (hdImageUrl != null && hdImageUrl.isNotEmpty) {
-      imageUrl = hdImageUrl;
-    } else if (imageUrl != null &&
-        imageUrl.contains(
-            'https://classgoapp.com/storage/thumbnails/https://classgoapp.com/storage/thumbnails/')) {
-      imageUrl = imageUrl.replaceFirst(
-          'https://classgoapp.com/storage/thumbnails/https://classgoapp.com/storage/thumbnails/',
-          'https://classgoapp.com/storage/thumbnails/');
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightBlueColor,
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(20),
-          topLeft: Radius.circular(0),
-          bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(16),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl ?? '',
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person,
-                          size: 30, color: AppColors.lightBlueColor),
-                    ),
-                    errorWidget: (context, url, error) => CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person,
-                          size: 30, color: AppColors.lightBlueColor),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (userData != null)
-                      Text(
-                        userData['user']?['profile']?['full_name'] ??
-                            userData['user']?['name'] ??
-                            userData['user']?['email'] ??
-                            'Usuario',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    else
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                                builder: (context) => LoginScreen()),
-                            (Route<dynamic> route) => false,
-                          );
-                        },
-                        child: Text(
-                          'Iniciar sesión',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    SizedBox(height: 4),
-                    if (userData != null)
-                      Text(
-                        userData['user']?['email'] ?? '',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 18),
-          Divider(color: Colors.white24, thickness: 1),
-        ],
-      ),
-    );
-  }
-}
-
-class UpcomingSessionBanner extends StatefulWidget {
-  final List<Map<String, dynamic>> bookings;
-  const UpcomingSessionBanner({Key? key, required this.bookings})
-      : super(key: key);
-
-  @override
-  State<UpcomingSessionBanner> createState() => _UpcomingSessionBannerState();
-
-  static bool _areBookingsEqual(
-      List<Map<String, dynamic>> a, List<Map<String, dynamic>> b) {
-    if (a.length != b.length) return false;
-    for (int i = 0; i < a.length; i++) {
-      if (a[i]['id'] != b[i]['id'] || a[i]['status'] != b[i]['status']) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  static int _getBookingsHash(List<Map<String, dynamic>> bookings) {
-    return bookings.fold(0,
-        (hash, booking) => Object.hash(hash, booking['id'], booking['status']));
-  }
-}
-
-class _UpcomingSessionBannerState extends State<UpcomingSessionBanner>
+class UpcomingSessionBannerState extends State<UpcomingSessionBanner>
     with AutomaticKeepAliveClientMixin {
   // Cache para evitar llamadas repetidas a la API
   final Map<int, Future<Map<String, dynamic>?>> _slotDetailCache = {};
@@ -3508,84 +2805,7 @@ class _UpcomingSessionBannerState extends State<UpcomingSessionBanner>
   @override
   bool get wantKeepAlive => true;
 
-  // Función para vibrar según el estado de la tutoría
-  Future<void> _vibrateForStatus(String status) async {
-    try {
-      final hasVibrator = await Vibration.hasVibrator();
-
-      if (hasVibrator ?? false) {
-        switch (status.toLowerCase()) {
-          case 'aceptada':
-          case 'aceptado':
-            // Vibración larga para aceptación
-            await Vibration.vibrate(duration: 800);
-            break;
-          case 'rechazada':
-          case 'rechazado':
-            // Vibración corta para rechazo
-            await Vibration.vibrate(duration: 300);
-            break;
-          case 'cursando':
-            // Patrón especial para inicio de tutoría
-            await Vibration.vibrate(pattern: [0, 400, 100, 400, 100, 400]);
-            break;
-          case 'pendiente':
-            // Vibración suave para actualización
-            await Vibration.vibrate(duration: 200);
-            break;
-          default:
-            // Vibración por defecto
-            await Vibration.vibrate(duration: 500);
-        }
-      }
-    } catch (e) {
-      print('Error al vibrar: $e');
-    }
-  }
-
-  // Función para mapear estados numéricos a string
-  // String _mapStatusToString(dynamic status) {
-  //   print('🔍 Mapeando estado: $status (tipo: ${status.runtimeType})');
-  //   if (status == null) return '';
-
-  //   // Si ya es string, retornarlo
-  //   if (status is String) {
-  //     final result = status.toLowerCase().trim();
-  //     print('🔍 Estado es string, resultado: $result');
-  //     return result;
-  //   }
-
-  //   // Mapear estados numéricos
-  //   final statusStr = status.toString();
-  //   print('🔍 Estado convertido a string: $statusStr');
-
-  //   switch (statusStr) {
-  //     case '1':
-  //       print('🔍 Mapeando 1 -> pendiente');
-  //       return 'pendiente';
-  //     case '2':
-  //       print('🔍 Mapeando 2 -> aceptada');
-  //       return 'aceptada';
-  //     case '3':
-  //       print('🔍 Mapeando 3 -> rechazada');
-  //       return 'rechazada';
-  //     case '4':
-  //       print('🔍 Mapeando 4 -> completada');
-  //       return 'completada';
-  //     case '5':
-  //       print('🔍 Mapeando 5 -> cancelada');
-  //       return 'cancelada';
-  //     case '6':
-  //       print('🔍 Mapeando 6 -> cursando');
-  //       return 'cursando';
-  //     default:
-  //       final result = statusStr.toLowerCase().trim();
-  //       print('🔍 Estado por defecto: $result');
-  //       return result;
-  //   }
-  // }
-  // Función para mapear estados numéricos a string
-  // Función para abrir el link de la tutoría en el navegador
+  
   Future<void> _openTutoringLink(Map<String, dynamic> booking) async {
     print('🔍 === DEBUGGING TUTORING LINK ===');
     print('🔍 Booking completo: $booking');
@@ -3702,8 +2922,9 @@ class _UpcomingSessionBannerState extends State<UpcomingSessionBanner>
       );
 
       // Reproducir sonido y vibrar según el nuevo estado
-      _HomeScreenState._playStatusChangeSound(changedBooking['status']);
-      _vibrateForStatus(changedBooking['status'] ?? '');
+      SoundService.playStatusChangeSound(changedBooking['status']);
+      VibrationService.vibrateForStatus(changedBooking['status'] ?? '');
+  
     }
 
     if (widget.bookings.isEmpty) return const SizedBox.shrink();
@@ -3834,7 +3055,7 @@ class _UpcomingSessionBannerState extends State<UpcomingSessionBanner>
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (context) => _BookingDetailModal(
+              builder: (context) => BookingDetailModal(
                 booking: booking,
                 highResTutorImages: (context
                         .findAncestorStateOfType<_HomeScreenState>()
@@ -3879,7 +3100,7 @@ class _UpcomingSessionBannerState extends State<UpcomingSessionBanner>
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder: (context) => _BookingDetailModal(
+                  builder: (context) => BookingDetailModal(
                     booking: booking,
                     highResTutorImages: (context
                             .findAncestorStateOfType<_HomeScreenState>()
@@ -4438,289 +3659,3 @@ class _UpcomingSessionBannerState extends State<UpcomingSessionBanner>
     }
   }
 }
-
-class _BookingDetailModal extends StatelessWidget {
-  final Map<String, dynamic> booking;
-  final Map<int, String> highResTutorImages;
-  const _BookingDetailModal(
-      {Key? key, required this.booking, required this.highResTutorImages})
-      : super(key: key);
-
-  Future<Map<String, dynamic>?> fetchSlotDetail(int slotId) async {
-    final url = Uri.parse('https://classgoapp.com/api/slot-detail/$slotId');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['status'] == 200 && data['data'] != null) {
-        return data['data'];
-      }
-    }
-    return null;
-  }
-
-  Future<String?> fetchTutorHDImage(int tutorId) async {
-    try {
-      final url = Uri.parse(
-          'https://classgoapp.com/api/verified-tutors-photos?tutor_id=$tutorId');
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['data'] is List && data['data'].isNotEmpty) {
-          final item = data['data'].firstWhere(
-            (e) => e['id'] == tutorId && e['profile_image'] != null,
-            orElse: () => null,
-          );
-          if (item != null && item['profile_image'] != null) {
-            return item['profile_image'] as String;
-          }
-        }
-      }
-    } catch (e) {
-      // Ignorar error, usar fallback
-    }
-    return '';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final slotId = booking['id'] is int
-        ? booking['id']
-        : int.tryParse(booking['id'].toString() ?? '');
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: fetchSlotDetail(slotId ?? 0),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return SafeArea(
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 32,
-                bottom: 24 + MediaQuery.of(context).padding.bottom,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 24,
-                    offset: Offset(0, -8),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF00B4D8)),
-              ),
-            ),
-          );
-        }
-        if (!snapshot.hasData || snapshot.data == null) {
-          return SafeArea(
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 32,
-                bottom: 24 + MediaQuery.of(context).padding.bottom,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 24,
-                    offset: Offset(0, -8),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text('No se pudo cargar el detalle de la tutoría',
-                    style: TextStyle(color: Colors.red)),
-              ),
-            ),
-          );
-        }
-        final data = snapshot.data!;
-        final tutor = data['tutor'] ?? {};
-        final subject = data['subject']?['name'] ?? 'Materia desconocida';
-        final tutorName = tutor['full_name'] ?? 'Tutor desconocido';
-        final tutorUserId = tutor['user_id'] is int
-            ? tutor['user_id']
-            : int.tryParse(tutor['user_id']?.toString() ?? '');
-        final status = (data['status'] ?? '').toString();
-        final startHour = data['start_time'] ?? '';
-        return FutureBuilder<String?>(
-          future: tutorUserId != null
-              ? fetchTutorHDImage(tutorUserId)
-              : Future.value(null),
-          builder: (context, hdSnapshot) {
-            final hdImage = hdSnapshot.data;
-            print('DEBUG: Mostrando imagen HD de tutor en modal: $hdImage');
-            return SafeArea(
-              child: Container(
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  top: 32,
-                  bottom: 24 + MediaQuery.of(context).padding.bottom,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.darkBlue,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.lightBlueColor.withOpacity(0.18),
-                      blurRadius: 24,
-                      offset: Offset(0, -8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 5,
-                        margin: EdgeInsets.only(bottom: 18),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 38,
-                            backgroundColor:
-                                AppColors.lightBlueColor.withOpacity(0.18),
-                            backgroundImage:
-                                (hdImage != null && hdImage.isNotEmpty)
-                                    ? NetworkImage(hdImage)
-                                    : null,
-                            child: (hdImage == null || hdImage.isEmpty)
-                                ? Icon(Icons.person,
-                                    size: 38, color: AppColors.lightBlueColor)
-                                : null,
-                          ),
-                          SizedBox(height: 10),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.lightBlueColor.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.verified_user,
-                                    color: AppColors.lightBlueColor, size: 18),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Tutor',
-                                  style: TextStyle(
-                                    color: AppColors.lightBlueColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            tutorName,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Icon(Icons.book, color: AppColors.lightBlueColor),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            subject,
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time,
-                            color: AppColors.lightBlueColor),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            startHour.isNotEmpty
-                                ? 'Hora de inicio: $startHour'
-                                : 'Horario no disponible',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            color: AppColors.lightBlueColor),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Estado: $status',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 28),
-                    Center(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.lightBlueColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 14),
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.close, color: Colors.white),
-                        label: Text('Cerrar',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-// ✅ OPTIMIZACIÓN: Clase separada para las tarjetas de tutores con mejor gestión de memoria
-
