@@ -368,7 +368,9 @@ class _LoginScreenState extends State<LoginScreen>
 
       // ❌ NO navegues
       // RoleBasedNavigation se encarga solo
-    } catch (e) {
+    } catch (e, stacktrace) {
+      print('🔴 ERROR REAL: $e');
+      print('📜 STACKTRACE: $stacktrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al iniciar sesión con Google')),
       );

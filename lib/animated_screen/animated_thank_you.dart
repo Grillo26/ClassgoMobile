@@ -71,7 +71,8 @@ class _ThankYouPageState extends State<ThankYouPage> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => HomeScreen(forceRefresh: true),
+                //builder: (context) => HomeScreen(forceRefresh: true),
+                builder: (context) => HomeScreen(),
               ),
             );
           }
