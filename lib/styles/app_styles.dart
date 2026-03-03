@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppColors {
   static const backgroundColor = Color(0xFFF4F4FB);
@@ -40,18 +41,127 @@ class AppColors {
   static const blue = Color(0xFF1570EF);
   static const speakerBgColor = Color(0xFFf2f5f5);
   static const trashBgColor = Color(0xFFFAEDED);
-  static const navbar=Color(0xff219EBC);
-  static const blurprimary=Color(0xff0E3A4F);
-  static const orangeprimary=Color(0xffFB8500);
+  static const navbar = Color(0xff219EBC);
+  static const blurprimary = Color(0xff0E3A4F);
+  static const orangeprimary = Color(0xffFB8500);
   static const darkGreyColor = Color(0xFF2C2C2C);
   static const mediumGreyColor = Color(0xFF424242);
   static const accentOrange = Color(0xFFFF9800);
   static const starYellow = Color(0xFFFFC107);
   static const lightGreyColor = Color(0xFFB0B0B0);
+
+  static const neonGreen = Color(0xFF00D856);
+  static const neonOrange = Color(0xFFFF9000);
+
+  // Fondos
+  static const deepDarkBg = Color(0xFF09090B);
+  static const softWhiteBg = Color(0xFFF5F7FA);
+
+  // Superficies (Tarjetas)
+  static const cardDark = Color(0xFF18181B);
+  static const cardLight = Color(0xFFFFFFFF);
+  
+  // Header
+  static const headerLight = const Color(0xFF113644);
+  static const textColor = const Color(0xFF032F45);
+  static const headerDark = const Color(0xFF09090B);
+
+  // Textos
+  static const textDarkPrimary = Colors.white;
+  static const textDarkSecondary = Colors.white70;
+  static const textLightPrimary = Color(0xFF1A1D1E);
+  static const textLightSecondary = Color(0xFF6C757D);
+
+  // ... (Tus colores anteriores) ...
+
+  // ===========================================================================
+  // 🆕 SISTEMA NEOCLEAN (Convertidos a HEX)
+  // ===========================================================================
+  // Marca 
+  static const brandBlue = Color(0xFF023047);   // Deep Blue (Primario)
+  static const brandCyan = Color(0xFF219EBC);   // Cyan Blue (Acción)
+  static const brandOrange = Color(0xFFFB8500); // Bright Orange (Urgencia)
+  static const backgroundLight = Color(0xFFFAF9F6); // Background Light
+
+  // Estados
+  static const stateSuccess = Color(0xFF22C55E); // Green 500 (Online)
+  static const stateUrgent = Color(0xFFEF4444);  // Red 500 (Live/Urgent)
+  static const stateMuted = Color(0xFF64748B);   // Slate 500 (Invisible)
+  
+  // Colores para Tarjetas en Dark Mode (Basado en tu Deep Blue)
+  static const cardDarkNeo = Color(0xFF051923); // Un tono más oscuro que el brandBlue para contraste
+
+  // NUEVOS COLORES PARA ESTE DISEÑO EXACTO:
+  static const Color darkBackground = Color(0xFF00131B); // El fondo oscuro exacto
+  static const Color greyText = Color(0xFF9E9E9E); // Para IDs e iconos inactivos
+  static const Color dividerLight = Color(0xFFEEEEEE); // Divisor muy sutil en light
+  static const Color dividerDark = Color(0xFF2C2C2C); // Divisor muy sutil en dark
+}
+
+class AppTheme {
+  // 1. TEMA CLARO (Basado en imagen blanca limpia)
+  static final ThemeData lightTheme = ThemeData(
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: AppColors.softWhiteBg,
+    primaryColor: AppColors.neonOrange,
+
+    // Definimos los colores de las tarjetas por defecto
+    cardTheme: CardThemeData(
+      color: AppColors.cardLight,
+      shadowColor: Colors.black.withOpacity(0.05),
+      elevation: 4,
+    ),
+
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: AppColors.textLightPrimary),
+      bodyMedium: TextStyle(color: AppColors.textLightSecondary),
+      titleLarge: TextStyle(
+          color: AppColors.textLightPrimary, fontWeight: FontWeight.bold),
+    ),
+
+    appBarTheme: const AppBarTheme(
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    ),
+  );
+
+  static final ThemeData darkTheme = ThemeData(
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor:
+        AppColors.deepDarkBg,
+    primaryColor: AppColors.neonOrange,
+
+    cardTheme: const CardThemeData(
+      color: AppColors.cardDark,
+      shadowColor:
+          Colors.transparent, 
+      elevation: 0,
+    ),
+
+    // Textos por defecto para Modo Oscuro
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(color: AppColors.textDarkPrimary),
+      bodyMedium: TextStyle(color: AppColors.textDarkSecondary),
+      titleLarge: TextStyle(
+          color: AppColors.textDarkPrimary, fontWeight: FontWeight.bold),
+    ),
+
+    // Barra de estado (Iconos claros para fondo oscuro)
+    appBarTheme: const AppBarTheme(
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    ),
+  );
 }
 
 class AppImages {
-  static const String logoespecial='assets/svg/tugoespecial.svg';
+  static const String logoespecial = 'assets/svg/tugoespecial.svg';
   static const String logo = 'assets/svg/app_logo.svg';
   static const String icon = 'assets/images/app_logo.png';
   static const String splash = 'assets/svg/splash_image.svg';

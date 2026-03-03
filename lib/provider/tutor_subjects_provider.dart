@@ -32,17 +32,21 @@ class TutorSubjectsProvider with ChangeNotifier {
       if (response['status'] == 200 && response['data'] != null) {
         final List<dynamic> subjectsData = response['data'];
         print('🔍 DEBUG - Datos crudos de materias recibidos:');
+
         for (int i = 0; i < subjectsData.length; i++) {
           final subject = subjectsData[i];
-          print('   Materia $i: ID=${subject['id']}, Subject ID=${subject['subject_id']}, Nombre=${subject['subject']?['name'] ?? 'N/A'}');
+          print(
+              '   Materia $i: ID=${subject['id']}, Subject ID=${subject['subject_id']}, Nombre=${subject['subject']?['name'] ?? 'N/A'}');
         }
-        
+
         _subjects =
             subjectsData.map((json) => TutorSubject.fromJson(json)).toList();
       } else {
+        _subjects = [];
         _error = response['message'] ?? 'Error al cargar las materias';
       }
     } catch (e) {
+      _subjects = [];
       _error = 'Error de conexión: $e';
       print('Error loading tutor subjects: $e');
     }
@@ -63,12 +67,12 @@ class TutorSubjectsProvider with ChangeNotifier {
       return false;
     }
 
-    _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await addTutorSubject(
+      // final response = 
+      await addTutorSubject(
         authProvider.token!,
         authProvider.userId!,
         subjectId,
@@ -76,21 +80,22 @@ class TutorSubjectsProvider with ChangeNotifier {
         imagePath,
       );
 
-      if (response['status'] == 200 || response['status'] == 201) {
-        // Recargar las materias después de agregar una nueva
-        await loadTutorSubjects(authProvider);
+      // if (response['status'] == 200 ||
+      //     response['status'] == 201 ||
+      //     response['success'] == true ||
+      //     response['message'] == 'Materia agregada correctamente' ||
+      //     response['data'] != null) {
+      //   // await loadTutorSubjects(authProvider);
         return true;
-      } else {
-        _error = response['message'] ?? 'Error al agregar la materia';
-        return false;
-      }
+      // } else {
+      //   _error = response['message'] ?? 'Error al agregar la materia';
+      //   print('🔍 DEBUG - Falso error al agregar: $response'); 
+      //   return false;
+      // }
     } catch (e) {
       _error = 'Error de conexión: $e';
       print('Error adding tutor subject: $e');
       return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
   }
 
@@ -99,22 +104,20 @@ class TutorSubjectsProvider with ChangeNotifier {
     int subjectId,
   ) async {
     print('🚀 DEBUG - Iniciando proceso de eliminación de materia...');
-    
+
     if (authProvider.token == null) {
       _error = 'No hay token de autenticación';
       notifyListeners();
       return false;
     }
 
-    _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       print('🔍 DEBUG - Eliminando materia con ID: $subjectId');
       print('🔍 DEBUG - ID del tutor: ${authProvider.userId}');
-      
-      // Buscar la materia para mostrar su nombre
+
       final subjectToDelete = _subjects.firstWhere(
         (subject) => subject.id == subjectId,
         orElse: () => TutorSubject(
@@ -130,21 +133,26 @@ class TutorSubjectsProvider with ChangeNotifier {
           ),
         ),
       );
-      print('🔍 DEBUG - Materia a eliminar: "${subjectToDelete.subject.name}" (ID: $subjectId)');
-      print('🔍 DEBUG - ID de relación: $subjectId, ID de materia base: ${subjectToDelete.subjectId}');
-      
-      // Usar subjectId en lugar de id para la eliminación
+      print(
+          '🔍 DEBUG - Materia a eliminar: "${subjectToDelete.subject.name}" (ID: $subjectId)');
+      print(
+          '🔍 DEBUG - ID de relación: $subjectId, ID de materia base: ${subjectToDelete.subjectId}');
+
       final response = await deleteTutorSubject(
         authProvider.token!,
         authProvider.userId!,
-        subjectToDelete.subjectId, // ← Usar subjectId en lugar de id
+        subjectToDelete.subjectId,
       );
 
       print('🔍 DEBUG - Respuesta de eliminación: $response');
 
       if (response['success'] == true) {
         print('🔍 DEBUG - Eliminación exitosa, recargando materias...');
-        // Recargar las materias después de eliminar
+
+        _subjects.removeWhere((s) =>
+            s.id == subjectId || s.subjectId == subjectToDelete.subjectId);
+        notifyListeners();
+
         await loadTutorSubjects(authProvider);
         print('🔍 DEBUG - Materias recargadas después de eliminar');
         return true;

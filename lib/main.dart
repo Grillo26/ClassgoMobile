@@ -4,6 +4,8 @@ import 'package:flutter_projects/config/firebase_options.dart';
 import 'package:flutter_projects/provider/auth_provider.dart';
 import 'package:flutter_projects/provider/connectivity_provider.dart';
 import 'package:flutter_projects/provider/settings_provider.dart';
+import 'package:flutter_projects/view/tutor/features/agenda/providers/tutor_agenda_provider.dart';
+import 'package:flutter_projects/view/tutor/features/home/providers/tutor_home_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:flutter_projects/helpers/pusher_service.dart';
@@ -15,9 +17,10 @@ import 'package:flutter_projects/provider/booking_provider.dart';
 import 'package:flutter_projects/provider/tutor_subjects_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:io';
+import 'package:flutter_projects/provider/theme_provider.dart';
+import 'package:flutter_projects/styles/app_styles.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -60,7 +63,23 @@ void main() async {
     print('Error al obtener configuraciones: $e');
   }
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
+        ChangeNotifierProvider(create: (_) => PusherService()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => TutorSubjectsProvider()),
+        ChangeNotifierProvider(create: (_) => TutorHomeProvider()),
+        ChangeNotifierProvider(create: (_) => TutorAgendaProvider()),
+        ChangeNotifierProvider(create: (_) => TutorSubjectsProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -82,25 +101,19 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
-        ChangeNotifierProvider(create: (context) => SettingsProvider()),
-        ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
-        ChangeNotifierProvider(create: (context) => PusherService()),
-        ChangeNotifierProvider(create: (context) => BookingProvider()),
-        ChangeNotifierProvider(create: (context) => TutorSubjectsProvider()),
-      ],
-      child: OverlaySupport.global(
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return OverlaySupport.global(
         child: MaterialApp(
           navigatorKey: navigatorKey,
           title: 'ClassGo',
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            useMaterial3: true,
-          ),
-          localizationsDelegates: [
+
+          themeMode: themeProvider.themeMode, 
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+
+          localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
@@ -111,7 +124,6 @@ class _MyAppState extends State<MyApp> {
           ],
           home: RoleBasedNavigation(),
         ),
-      ),
     );
   }
 }

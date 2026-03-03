@@ -53,16 +53,16 @@ class TutoriasProvider extends ChangeNotifier {
         }
         final bookings = await getUserBookingsById(token, userId);
         final List<Map<String, dynamic>> tutorias = bookings.map((booking) {
-          final startTime =
+          final time =
               DateTime.tryParse(booking['start_time'] ?? '') ?? DateTime.now();
           final status = (booking['status'] ?? '').toString().toLowerCase();
           final subjectName = booking['subject_name'] ?? 'Tutoría';
           return {
             'id': booking['id'],
             'title': subjectName,
-            'date': startTime,
+            'date': time,
             'hour':
-                '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}',
+                '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
             'status': status,
             'start_time': booking['start_time'],
             'end_time': booking['end_time'],

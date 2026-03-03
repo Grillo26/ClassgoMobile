@@ -13,7 +13,7 @@ class AddSubjectModal extends StatefulWidget {
 
 class _AddSubjectModalState extends State<AddSubjectModal> {
   final _formKey = GlobalKey<FormState>();
-  Set<int> _selectedSubjectIds = {}; // Cambiar a Set para múltiples selecciones
+  Set<int> _selectedSubjectIds = {}; 
   String? _selectedImagePath;
   bool _isLoading = false;
   bool _isLoadingSubjects = true;
@@ -129,6 +129,8 @@ class _AddSubjectModalState extends State<AddSubjectModal> {
       final response =
           await getAllSubjects(authProvider.token!, page: 1, perPage: 20);
 
+      if(!mounted) return;
+
       if (response['status'] == 200 &&
           response['data'] != null &&
           response['data']['data'] != null) {
@@ -166,6 +168,7 @@ class _AddSubjectModalState extends State<AddSubjectModal> {
       }
     } catch (e) {
       print('Error loading all subjects: $e');
+      if (!mounted) return;
       setState(() {
         _isLoadingSubjects = false;
         _subjectsLoadError = true;
@@ -223,23 +226,26 @@ class _AddSubjectModalState extends State<AddSubjectModal> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedSubjectIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor selecciona al menos una materia')),
+        const SnackBar(content: Text('Por favor selecciona al menos una materia')),
       );
       return;
     }
+
+    // 1. CAPTURAMOS LAS HERRAMIENTAS ANTES DE CUALQUIER 'AWAIT'
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final subjectsProvider = Provider.of<TutorSubjectsProvider>(context, listen: false);
 
     setState(() {
       _isLoading = true;
     });
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final subjectsProvider =
-        Provider.of<TutorSubjectsProvider>(context, listen: false);
-
     int successCount = 0;
     int totalCount = _selectedSubjectIds.length;
 
-    // Agregar materias una por una
+    // 2. Agregamos las materias una por una
     for (int subjectId in _selectedSubjectIds) {
       final success = await subjectsProvider.addTutorSubjectToApi(
         authProvider,
@@ -253,41 +259,43 @@ class _AddSubjectModalState extends State<AddSubjectModal> {
       }
     }
 
+    // 3. Recargamos la lista MIENTRAS el modal sigue abierto (para que no se vea el salto en la UI)
+    await subjectsProvider.loadTutorSubjects(authProvider);
+
+    // 🔥 4. VERIFICAMOS SI EL USUARIO CERRÓ EL MODAL A LA FUERZA
+    if (!mounted) return;
+
     setState(() {
       _isLoading = false;
     });
 
-    Navigator.of(context).pop();
+    // 5. AHORA SÍ, CERRAMOS EL MODAL USANDO EL NAVIGATOR CAPTURADO
+    navigator.pop();
 
-    // Refrescar la lista de materias del tutor después de agregar
-    await subjectsProvider.loadTutorSubjects(authProvider);
-
+    // 6. MOSTRAMOS EL MENSAJE USANDO EL MENSAJERO CAPTURADO (Esto ya no crashea)
     if (successCount == totalCount) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('$successCount materias agregadas exitosamente'),
           backgroundColor: AppColors.primaryGreen,
         ),
       );
     } else if (successCount > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text(
-              '$successCount de $totalCount materias agregadas. Algunas fallaron.'),
+          content: Text('$successCount de $totalCount materias agregadas. Algunas fallaron.'),
           backgroundColor: Colors.orange,
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         SnackBar(
-          content:
-              Text(subjectsProvider.error ?? 'Error al agregar las materias'),
+          content: Text(subjectsProvider.error ?? 'Error al agregar las materias'),
           backgroundColor: AppColors.redColor,
         ),
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Container(
