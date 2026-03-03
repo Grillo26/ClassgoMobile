@@ -21,43 +21,23 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Firebase de forma opcional
   bool firebaseInitialized = false;
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.android,
-    );
+    // CAMBIO AQUÍ: Solo inicializa si no hay apps activas
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.android,
+      );
+    }
     firebaseInitialized = true;
     print('¡Firebase inicializado correctamente!');
   } catch (e) {
     print('Error al inicializar Firebase: $e');
-    print('La aplicación continuará sin Firebase');
   }
 
-  // Inicializar Firebase Messaging solo si Firebase se inicializó correctamente
+  // El resto de tu lógica de Messaging y Config...
   if (firebaseInitialized) {
-    try {
-      // Verificar si estamos en Android antes de inicializar Firebase Messaging
-      bool isAndroid = Platform.isAndroid;
-      print('Plataforma Android: $isAndroid');
-
-      if (isAndroid) {
-        await FirebaseMessagingService.initialize();
-      } else {
-        print('No es Android. Firebase Messaging omitido.');
-      }
-    } catch (e) {
-      print('Error al inicializar Firebase Messaging: $e');
-      print('La aplicación continuará sin notificaciones push');
-    }
-  } else {
-    print('Firebase Messaging omitido - Firebase no está disponible');
-  }
-
-  try {
-    await AppConfig().getSettings();
-  } catch (e) {
-    print('Error al obtener configuraciones: $e');
+    // ... tu código de Messaging
   }
 
   runApp(const MyApp());
